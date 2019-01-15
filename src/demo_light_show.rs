@@ -1,8 +1,17 @@
 use crate::lights::*;
 
 
+const WAVELEN: isize = 20;
+
+
 pub struct Demo {
-    state: usize
+    state: isize
+}
+
+impl Demo {
+    fn wave(d: isize) -> u8 {
+        (256 / WAVELEN) as u8 * isize::abs(d % WAVELEN - WAVELEN / 2) as u8
+    }
 }
 
 impl LightShow for Demo {
@@ -14,14 +23,14 @@ impl LightShow for Demo {
 
     fn next(&mut self) -> Lights {
         self.state += 1;
-        let a = 50 * (self.state % 6) as u8;
-        let b = 50 * ((self.state + 1) % 6) as u8;
-        let c = 50 * ((self.state + 2) % 6) as u8;
+        let a = Demo::wave(self.state);
+        let b = Demo::wave(self.state + WAVELEN / 4);
+        let c = Demo::wave(self.state + WAVELEN / 2);
         Lights {
             lights: [
-                Light::new(a, b, a),
-                Light::new(b, b, c),
-                Light::new(a, c, c)
+                Light::new(a, b, c),
+                Light::new(b, c, a),
+                Light::new(c, a, b)
             ]
         }
     }
