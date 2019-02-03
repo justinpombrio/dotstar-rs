@@ -36,7 +36,7 @@ fn f_inv(t: i32) -> i32 {
     } else {
         ((3 * (DELTA >> 6) * (DELTA >> 6)) >> 6) * ((t >> 6) - (4 << 6) / 29)
     };
-    eprintln!("f_inv({}) = {}", t, ans);
+    //eprintln!("f_inv({}) = {}", t, ans);
     ans
 }
 
@@ -51,7 +51,7 @@ fn lab_to_xyz(lab: ColorLab, illuminant: Illuminant) -> ColorXyz {
         y: lum.y_n * f_inv(l_adj),
         z: lum.z_n * f_inv(l_adj + b_adj),
     };
-    eprintln!("x:{} y:{}, z:{}", ans.x, ans.y, ans.z);
+    //eprintln!("x:{} y:{}, z:{}", ans.x, ans.y, ans.z);
     ans
 }
 
@@ -76,7 +76,7 @@ fn xyz_to_rgb(xyz: ColorXyz) -> ColorRgb {
             b: ((55 * x - 485 * y + 4159 * z) >> 16) as u8,
         };
     */
-    eprintln!("r:{} g:{} b:{}", ans.r, ans.g, ans.b);
+    //eprintln!("r:{} g:{} b:{}", ans.r, ans.g, ans.b);
     ans
 }
 /*    ColorRgb {

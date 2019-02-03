@@ -15,7 +15,7 @@ impl Demo {
 
 fn lab(l: i8, a: i8, b: i8) -> Rgb {
     let ColorRgb { r, g, b } = ColorLab { l, a, b }.into();
-    Rgb(r, g, b)
+    Rgb { r, g, b }
 }
 
 impl Demo {

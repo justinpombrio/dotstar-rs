@@ -48,9 +48,8 @@ impl TerminalRenderer {
     fn run_or_err<S: LightShow<()>>(&mut self, mut light_show: S) -> io::Result<()> {
         write!(self.stdout, "{}", cursor::Hide)?;
         loop {
-            let mut lights = [Rgb(0, 0, 0); 20];
+            let mut lights = [Rgb { r: 0, g: 0, b: 0 }; 20];
             let _ = light_show.next(&mut lights);
-            // write!(self.stdout, "{}", lights)?;
             write_lights(&mut self.stdout, &lights)?;
             self.stdout.flush()?;
             thread::sleep(DELAY);
@@ -68,7 +67,7 @@ fn write_light<W>(f: &mut W, light: &Rgb) -> io::Result<()>
 where
     W: Write,
 {
-    let color = color::Rgb(light.0, light.1, light.2);
+    let color = color::Rgb(light.r, light.g, light.b);
     write!(f, "{}", color::Fg(color))?;
     write!(f, "⬤ ")
 }
