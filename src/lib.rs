@@ -1,5 +1,6 @@
-#![no_std]
+//#![no_std]
 
+mod color;
 mod demo_light_show;
 mod lights;
 

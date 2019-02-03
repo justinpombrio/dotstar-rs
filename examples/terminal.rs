@@ -1,4 +1,4 @@
-use dotstar::{Demo, Light, LightShow, LightStrip, Lights};
+use dotstar::{Demo, LightShow, LightStrip, Rgb};
 
 use core::time;
 
@@ -25,8 +25,8 @@ pub struct TerminalRenderer {
     stdout: screen::AlternateScreen<raw::RawTerminal<io::Stdout>>,
 }
 
-impl LightStrip for TerminalRenderer {
-    fn show<S: LightShow>(&mut self, light_show: S) {
+impl LightStrip<()> for TerminalRenderer {
+    fn show<S: LightShow<()>>(&mut self, light_show: S) {
         match self.run_or_err(light_show) {
             Ok(()) => (),
             Err(msg) => panic!("Failed to render light show! {}", msg),
@@ -45,10 +45,11 @@ impl TerminalRenderer {
         }
     }
 
-    fn run_or_err<S: LightShow>(&mut self, mut light_show: S) -> io::Result<()> {
+    fn run_or_err<S: LightShow<()>>(&mut self, mut light_show: S) -> io::Result<()> {
         write!(self.stdout, "{}", cursor::Hide)?;
         loop {
-            let lights = light_show.next();
+            let mut lights = [Rgb(0, 0, 0); 20];
+            let _ = light_show.next(&mut lights);
             // write!(self.stdout, "{}", lights)?;
             write_lights(&mut self.stdout, &lights)?;
             self.stdout.flush()?;
@@ -63,21 +64,21 @@ impl TerminalRenderer {
     }
 }
 
-fn write_light<W>(f: &mut W, light: &Light) -> io::Result<()>
+fn write_light<W>(f: &mut W, light: &Rgb) -> io::Result<()>
 where
     W: Write,
 {
-    let color = color::Rgb(light.color.0, light.color.1, light.color.2);
+    let color = color::Rgb(light.0, light.1, light.2);
     write!(f, "{}", color::Fg(color))?;
     write!(f, "⬤ ")
 }
 
-fn write_lights<W>(f: &mut W, all_lights: &Lights) -> io::Result<()>
+fn write_lights<W>(f: &mut W, all_lights: &[Rgb]) -> io::Result<()>
 where
     W: Write,
 {
     write!(f, "{}{}", clear::All, cursor::Goto(3, 2))?;
-    for (i, light) in all_lights.lights.iter().enumerate() {
+    for (i, light) in all_lights.iter().enumerate() {
         if i != 0 {
             write!(f, "{}", style::Reset)?;
             write!(f, "-")?;

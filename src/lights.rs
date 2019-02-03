@@ -1,28 +1,18 @@
-pub const NUM_LIGHTS: usize = 3;
+pub const NUM_LIGHTS: usize = 5;
 
+#[derive(Clone, Copy)]
 pub struct Rgb(pub u8, pub u8, pub u8);
 
-pub struct Light {
-    pub color: Rgb,
+pub enum Timeout {
+    Millis(usize),
+    Never,
 }
 
-pub struct Lights {
-    pub lights: [Light; NUM_LIGHTS],
+pub trait LightShow<Settings> {
+    fn next(&mut self, lights: &mut [Rgb]) -> Timeout;
+    fn update_settings(&mut self, settings: &Settings);
 }
 
-pub trait LightShow {
-    fn new() -> Self;
-    fn next(&mut self) -> Lights;
-}
-
-pub trait LightStrip {
-    fn show<S: LightShow>(&mut self, light_show: S);
-}
-
-impl Light {
-    pub fn new(r: u8, g: u8, b: u8) -> Light {
-        Light {
-            color: Rgb(r, g, b),
-        }
-    }
+pub trait LightStrip<Settings> {
+    fn show<S: LightShow<Settings>>(&mut self, light_show: S);
 }
