@@ -4,5 +4,8 @@ version = "0.1.0"
 authors = ["Justin <zallambo@gmail.com>", "e-matteson <e.r.matteson@gmail.com>"]
 edition = "2018"
 
+[dependencies]
+embedded-hal = {version="0.2.2", features=["unproven"]}
+
 [dev-dependencies]
 termion = "1.5"

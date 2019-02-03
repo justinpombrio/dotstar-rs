@@ -49,7 +49,6 @@ impl TerminalRenderer {
         write!(self.stdout, "{}", cursor::Hide)?;
         loop {
             let lights = light_show.next();
-            // write!(self.stdout, "{}", lights)?;
             write_lights(&mut self.stdout, &lights)?;
             self.stdout.flush()?;
             thread::sleep(DELAY);
@@ -67,7 +66,7 @@ fn write_light<W>(f: &mut W, light: &Light) -> io::Result<()>
 where
     W: Write,
 {
-    let color = color::Rgb(light.color.0, light.color.1, light.color.2);
+    let color = color::Rgb(light.color.red, light.color.green, light.color.blue);
     write!(f, "{}", color::Fg(color))?;
     write!(f, "⬤ ")
 }
