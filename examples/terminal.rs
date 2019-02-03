@@ -1,4 +1,4 @@
-use dotstar::{Demo, LightShow, LightStrip, Rgb};
+use dotstar::{ColorRgb, Demo, LightShow, LightStrip, Timeout};
 
 use core::time;
 
@@ -12,67 +12,78 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
-pub const DELAY: time::Duration = time::Duration::from_millis(500);
-
 fn main() {
-    let demo = Demo::new();
+    let mut demo = Demo::new();
     let mut renderer = TerminalRenderer::new();
-    renderer.show(demo);
+    let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];
+    let mut never = false;
+    'outer: loop {
+        if never {
+            thread::sleep(time::Duration::from_millis(10));
+        } else {
+            let timeout = demo.next(&mut lights);
+            match renderer.show(&lights) {
+                Ok(()) => (),
+                Err(msg) => panic!("Failed to render light show! {}", msg),
+            }
+            match timeout {
+                Timeout::Millis(ms) => thread::sleep(time::Duration::from_millis(ms as u64)),
+                Timeout::Never => {
+                    never = true;
+                }
+            }
+        }
+        for key in &mut renderer.stdin {
+            match key.expect("Could not read key") {
+                Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
+                _ => continue,
+            }
+        }
+    }
 }
 
 pub struct TerminalRenderer {
-    stdin: input::Keys<termion::AsyncReader>,
+    pub stdin: input::Keys<termion::AsyncReader>,
     stdout: screen::AlternateScreen<raw::RawTerminal<io::Stdout>>,
 }
 
-impl LightStrip<()> for TerminalRenderer {
-    fn show<S: LightShow<()>>(&mut self, light_show: S) {
-        match self.run_or_err(light_show) {
-            Ok(()) => (),
-            Err(msg) => panic!("Failed to render light show! {}", msg),
-        }
-        let _ = write!(self.stdout, "{}", cursor::Show);
+impl LightStrip for TerminalRenderer {
+    type Error = io::Error;
+
+    fn show(&mut self, lights: &[ColorRgb]) -> io::Result<()> {
+        write_lights(&mut self.stdout, &lights)?;
+        self.stdout.flush()
     }
 }
 
 impl TerminalRenderer {
     pub fn new() -> TerminalRenderer {
         let stdin = termion::async_stdin().keys();
-        let stdout = screen::AlternateScreen::from(io::stdout().into_raw_mode().unwrap());
+        let mut stdout = screen::AlternateScreen::from(io::stdout().into_raw_mode().unwrap());
+        write!(stdout, "{}", cursor::Hide).expect("Could not hide cursor");
         TerminalRenderer {
             stdin: stdin,
             stdout: stdout,
         }
     }
+}
 
-    fn run_or_err<S: LightShow<()>>(&mut self, mut light_show: S) -> io::Result<()> {
-        write!(self.stdout, "{}", cursor::Hide)?;
-        loop {
-            let mut lights = [Rgb { r: 0, g: 0, b: 0 }; 20];
-            let _ = light_show.next(&mut lights);
-            write_lights(&mut self.stdout, &lights)?;
-            self.stdout.flush()?;
-            thread::sleep(DELAY);
-            for key in &mut self.stdin {
-                match key? {
-                    Key::Esc | Key::Char('q') | Key::Ctrl('c') => return Ok(()),
-                    _ => (),
-                }
-            }
-        }
+impl Drop for TerminalRenderer {
+    fn drop(&mut self) {
+        let _ = write!(self.stdout, "{}", cursor::Show);
     }
 }
 
-fn write_light<W>(f: &mut W, light: &Rgb) -> io::Result<()>
+fn write_light<W>(f: &mut W, light: &ColorRgb) -> io::Result<()>
 where
     W: Write,
 {
-    let color = color::Rgb(light.r, light.g, light.b);
-    write!(f, "{}", color::Fg(color))?;
+    let tcolor = color::Rgb(light.r, light.g, light.b);
+    write!(f, "{}", color::Fg(tcolor))?;
     write!(f, "⬤ ")
 }
 
-fn write_lights<W>(f: &mut W, all_lights: &[Rgb]) -> io::Result<()>
+fn write_lights<W>(f: &mut W, all_lights: &[ColorRgb]) -> io::Result<()>
 where
     W: Write,
 {

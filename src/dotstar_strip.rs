@@ -1,4 +1,4 @@
-use crate::Rgb;
+use crate::ColorRgb;
 
 use embedded_hal::blocking::spi;
 
@@ -13,7 +13,7 @@ impl<SPI: spi::Write<u8>> DotstarStrip<SPI> {
         Self { spi_bus }
     }
 
-    pub fn send(&mut self, lights: &[Rgb]) -> Result<(), SPI::Error> {
+    pub fn send(&mut self, lights: &[ColorRgb]) -> Result<(), SPI::Error> {
         // TODO combine into fewer write calls? does it matter?
         self.spi_bus.write(&START_FRAME)?;
         for light in lights {
@@ -28,7 +28,7 @@ impl<SPI: spi::Write<u8>> DotstarStrip<SPI> {
     }
 }
 
-fn led_frame(light: &Rgb) -> [u8; 4] {
+fn led_frame(light: &ColorRgb) -> [u8; 4] {
     let prefix_and_global_brightness = 255;
     [prefix_and_global_brightness, light.b, light.g, light.r]
 }

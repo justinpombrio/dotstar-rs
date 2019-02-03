@@ -7,15 +7,15 @@ pub struct Demo {
     //    state: isize,
 }
 
-impl Demo {
-    /*    fn wave(d: isize) -> u8 {
+/*impl Demo {
+    fn wave(t: isize) -> (i8, i8) {
         (256 / WAVELEN) as u8 * isize::abs(d % WAVELEN - WAVELEN / 2) as u8
-    }*/
-}
+    }
+}*/
 
-fn lab(l: i8, a: i8, b: i8) -> Rgb {
+fn lab(l: i8, a: i8, b: i8) -> ColorRgb {
     let ColorRgb { r, g, b } = ColorLab { l, a, b }.into();
-    Rgb { r, g, b }
+    ColorRgb { r, g, b }
 }
 
 impl Demo {
@@ -28,7 +28,7 @@ impl Demo {
 impl LightShow<()> for Demo {
     fn update_settings(&mut self, _: &()) {}
 
-    fn next(&mut self, lights: &mut [Rgb]) -> Timeout {
+    fn next(&mut self, lights: &mut [ColorRgb]) -> Timeout {
         lights[0] = lab(80, 20, 0);
         lights[1] = lab(80, -20, 0);
         lights[2] = lab(80, 0, 20);

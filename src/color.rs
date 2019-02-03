@@ -1,21 +1,26 @@
+// TODO: hide impl, have constructor return option. (b.c. some labs invalid)
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ColorLab {
     pub l: i8,
     pub a: i8,
     pub b: i8,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ColorRgb {
     pub r: u8,
     pub g: u8,
     pub b: u8,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 struct ColorXyz {
     x: i32,
     y: i32,
     z: i32,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Illuminant {
     x_n: i32,
     y_n: i32,
