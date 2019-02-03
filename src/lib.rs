@@ -1,7 +1,7 @@
-mod lights;
-mod terminal_renderer;
-mod demo_light_show;
+#![no_std]
 
-pub use self::lights::*;
-pub use self::terminal_renderer::TerminalRenderer;
+mod demo_light_show;
+mod lights;
+
 pub use self::demo_light_show::Demo;
+pub use self::lights::*;

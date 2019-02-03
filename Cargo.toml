@@ -1,8 +1,8 @@
 [package]
 name = "dotstar"
 version = "0.1.0"
-authors = ["Justin <zallambo@gmail.com>"]
+authors = ["Justin <zallambo@gmail.com>", "e-matteson <e.r.matteson@gmail.com>"]
 edition = "2018"
 
-[dependencies]
+[dev-dependencies]
 termion = "1.5"

@@ -1,11 +1,9 @@
 use crate::lights::*;
 
-
 const WAVELEN: isize = 20;
 
-
 pub struct Demo {
-    state: isize
+    state: isize,
 }
 
 impl Demo {
@@ -16,9 +14,7 @@ impl Demo {
 
 impl LightShow for Demo {
     fn new() -> Demo {
-        Demo {
-            state: 0
-        }
+        Demo { state: 0 }
     }
 
     fn next(&mut self) -> Lights {
@@ -30,8 +26,8 @@ impl LightShow for Demo {
             lights: [
                 Light::new(a, b, c),
                 Light::new(b, c, a),
-                Light::new(c, a, b)
-            ]
+                Light::new(c, a, b),
+            ],
         }
     }
 }
