@@ -171,5 +171,14 @@ mod tests {
         assert_eq!(clamp(110, 0, 0), (255, 255, 255));
         assert_eq!(clamp(2, 20, 20), (42, 0, 0));
         assert_eq!(clamp(100, -100, 50), (0, 255, 151));
+        // Make sure that extreme values don't cause under/overflow errors.
+        clamp(-128, -128, -128);
+        clamp(-128, -128, 127);
+        clamp(-128, 127, -128);
+        clamp(-128, 127, 127);
+        clamp(127, -128, -128);
+        clamp(127, -128, 127);
+        clamp(127, 127, -128);
+        clamp(127, 127, 127);
     }
 }
