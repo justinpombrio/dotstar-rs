@@ -1,17 +1,28 @@
 use crate::color::*;
 use crate::lights::*;
 
-//const WAVELEN: isize = 20;
+const WAVELEN: isize = 60;
+const AMPLITUDE: isize = 40;
 
 pub struct Demo {
-    //    state: isize,
+    state: isize,
 }
 
-/*impl Demo {
-    fn wave(t: isize) -> (i8, i8) {
-        (256 / WAVELEN) as u8 * isize::abs(d % WAVELEN - WAVELEN / 2) as u8
+fn sin(deg: isize, multiplier: isize) -> isize {
+    if deg < 0 {
+        return -sin(-deg, multiplier);
     }
-}*/
+    let deg = deg % 360;
+    if deg > 180 {
+        return -sin(360 - deg, multiplier);
+    }
+    // Thanks, Bhaskara I
+    multiplier * 4 * deg * (180 - deg) / (40500 - deg * (180 - deg))
+}
+
+fn cos(deg: isize, multiplier: isize) -> isize {
+    sin(90 - deg, multiplier)
+}
 
 fn lab(l: i8, a: i8, b: i8) -> ColorRgb {
     let ColorRgb { r, g, b } = ColorLab { l, a, b }.into();
@@ -20,8 +31,7 @@ fn lab(l: i8, a: i8, b: i8) -> ColorRgb {
 
 impl Demo {
     pub fn new() -> Demo {
-        Demo {}
-        //        Demo { state: 0 }
+        Demo { state: 0 }
     }
 }
 
@@ -29,24 +39,15 @@ impl LightShow<()> for Demo {
     fn update_settings(&mut self, _: &()) {}
 
     fn next(&mut self, lights: &mut [ColorRgb]) -> Timeout {
-        lights[0] = lab(80, 20, 0);
-        lights[1] = lab(80, -20, 0);
-        lights[2] = lab(80, 0, 20);
-        lights[3] = lab(80, 0, -20);
-        lights[4] = lab(80, 20, 20);
-        Timeout::Never
-        /*
         self.state += 1;
-        let a = Demo::wave(self.state);
-        let b = Demo::wave(self.state + WAVELEN / 4);
-        let c = Demo::wave(self.state + WAVELEN / 2);
-        Lights {
-            lights: [
-                Light::new(a, b, c),
-                Light::new(b, c, a),
-                Light::new(c, a, b),
-            ],
-        }
-        */
+        let deg = 360 * self.state / WAVELEN;
+        let a = sin(deg, AMPLITUDE / 2);
+        let b = cos(deg, AMPLITUDE / 2);
+        lights[0] = lab(100, 0, 0);
+        lights[1] = lab(80, 0, 20);
+        lights[2] = lab(80, a as i8, b as i8);
+        lights[3] = lab(80, -20, 0);
+        lights[4] = lab(80, 0, -20);
+        Timeout::Millis(100)
     }
 }
