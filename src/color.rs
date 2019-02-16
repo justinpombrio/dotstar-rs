@@ -1,5 +1,8 @@
 use crate::color_constants::*;
 
+/// [CIE-LAB](https://en.wikipedia.org/wiki/CIELAB_color_space#CIELAB) colors.
+/// `l` ranges from 0 to 99. The range of `a` and `b` is complex and reflects
+/// human vision, but invalid LAB colors can be clamped.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ColorLab {
     pub l: i8,
@@ -7,6 +10,8 @@ pub struct ColorLab {
     pub b: i8,
 }
 
+/// [sRGB](https://en.wikipedia.org/wiki/SRGB) colors.
+/// `r`, `g`, and `b` range from 0 to 255.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ColorRgb {
     pub r: u8,
@@ -15,15 +20,29 @@ pub struct ColorRgb {
 }
 
 impl ColorLab {
+    /// Convert to sRGB. If this color is invalid, return an `Err` of a clamped
+    /// version of it.
     pub fn to_srgb(self) -> Result<ColorRgb, ColorRgb> {
         lab_to_srgb(self)
     }
 
+    /// Convert to sRGB. If this color is invalid, automatically clamp it to a
+    /// valid color.
     pub fn to_srgb_clamped(self) -> ColorRgb {
         match lab_to_srgb(self) {
             Ok(color) => color,
             Err(color) => color,
         }
+    }
+}
+
+/// For a LAB L, find the radius of the largest valid A,B circle centered at (L,
+/// 0, 0).
+pub fn lab_radius(l: i8) -> Option<i8> {
+    if l < 0 || l >= 100 {
+        None
+    } else {
+        Some(LAB_RADIUS[l as usize])
     }
 }
 
@@ -182,3 +201,31 @@ mod tests {
         clamp(127, 127, 127);
     }
 }
+
+/*
+fn compute_lab_radius_table() {
+    for l in 0..100 {
+        let mut max_radius: i8 = 0;
+        for r in 0..100 {
+            let mut valid = true;
+            'outer: for a in -100..100 {
+                for b in -100..100 {
+                    let a32 = a as f32;
+                    let b32 = b as f32;
+                    let radius = (a32 * a32 + b32 * b32).sqrt();
+                    if radius <= r as f32
+                        && (ColorLab { l, a, b }).to_srgb().is_err()
+                    {
+                        valid = false;
+                        break 'outer;
+                    }
+                }
+            }
+            if valid {
+                max_radius = r;
+            }
+        }
+        println!("{}", max_radius);
+    }
+}
+*/

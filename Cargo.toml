@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 embedded-hal = {version="0.2.2", features=["unproven"]}
+rand = {version="0.6", default_features=false}
 
 [dev-dependencies]
 termion = "1.5"

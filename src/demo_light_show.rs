@@ -1,9 +1,19 @@
 use crate::color::*;
 use crate::lights::*;
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 
-const WAVELEN: isize = 60;
-const AMPLITUDE: isize = 80;
+// Number of lights to store in state. In there are more lights in the actual
+// strip, cycle these.
+const SIZE: usize = 64;
 
+// How long to wait between light updates, in ms.
+const DURATION: usize = 10;
+
+// How quickly to vary hue.
+const VARIATION: isize = 2;
+
+/// Controls the brightness.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DemoSettings {
     brightness: i8,
@@ -11,15 +21,17 @@ pub struct DemoSettings {
 
 impl DemoSettings {
     pub fn new() -> DemoSettings {
-        DemoSettings { brightness: 50 }
+        DemoSettings { brightness: 70 }
     }
 
+    /// Make it 10% brighter.
     pub fn inc(&mut self) {
         if self.brightness < 100 {
             self.brightness += 10;
         }
     }
 
+    /// Make it 10% dimmer.
     pub fn dec(&mut self) {
         if self.brightness >= 10 {
             self.brightness -= 10;
@@ -27,19 +39,27 @@ impl DemoSettings {
     }
 }
 
-#[derive(Debug)]
+/// A demo lightshow with lights of randomly varying hue, and controllable
+/// brightness.
 pub struct Demo {
     settings: DemoSettings,
-    state: isize,
+    rng: StdRng,
+    state: [isize; SIZE], // hue angle in degrees
 }
 
 impl LightShow for Demo {
     type Settings = DemoSettings;
 
     fn new(settings: &DemoSettings) -> Demo {
+        let mut rng = StdRng::seed_from_u64(161051);
+        let mut state = [0; SIZE];
+        for i in 0..SIZE {
+            state[i] = rng.gen_range(0, 360);
+        }
         Demo {
             settings: *settings,
-            state: 0,
+            rng: rng,
+            state: state,
         }
     }
 
@@ -48,17 +68,22 @@ impl LightShow for Demo {
     }
 
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
-        self.state += 1;
-        let deg = 360 * self.state / WAVELEN;
-        let l = self.settings.brightness;
-        let a = sin(deg, AMPLITUDE / 2);
-        let b = cos(deg, AMPLITUDE / 2);
-        lights[0] = lab(99, 0, 0);
-        lights[1] = lab(l, -b as i8, a as i8);
-        lights[2] = lab(l, a as i8, b as i8);
-        lights[3] = lab(l, b as i8, -a as i8);
-        lights[4] = lab(l, -a as i8, -b as i8);
-        Duration::Millis(100)
+        // Update state (random walk on hue circles)
+        for i in 0..SIZE {
+            self.state[i] += self.rng.gen_range(-VARIATION, VARIATION);
+        }
+        // Show the lights (cycle if needed)
+        for i in 0..lights.len() {
+            let l = self.settings.brightness;
+            let deg = self.state[i % SIZE];
+            let radius = lab_radius(l).unwrap_or(0) as isize;
+            let a = sin(deg, radius) as i8;
+            let b = cos(deg, radius) as i8;
+            let color = ColorLab { l, a, b }.to_srgb_clamped();
+            lights[i] = color;
+        }
+        // Wait
+        Duration::Millis(DURATION)
     }
 }
 
@@ -76,8 +101,4 @@ fn sin(deg: isize, multiplier: isize) -> isize {
 
 fn cos(deg: isize, multiplier: isize) -> isize {
     sin(90 - deg, multiplier)
-}
-
-fn lab(l: i8, a: i8, b: i8) -> ColorRgb {
-    ColorLab { l, a, b }.to_srgb_clamped()
 }
