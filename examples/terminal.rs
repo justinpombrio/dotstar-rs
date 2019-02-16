@@ -13,7 +13,7 @@ use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
 fn main() {
-    let mut settings = DemoSettings::new();
+    let mut settings = DemoSettings::default();
     let mut demo = Demo::new(&settings);
     let mut renderer = TerminalRenderer::new();
     let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];

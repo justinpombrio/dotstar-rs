@@ -8,7 +8,7 @@ use rand::{Rng, SeedableRng};
 const SIZE: usize = 64;
 
 // How long to wait between light updates, in ms.
-const DURATION: usize = 10;
+const DURATION: u32 = 10;
 
 // How quickly to vary hue.
 const VARIATION: isize = 2;
@@ -16,14 +16,10 @@ const VARIATION: isize = 2;
 /// Controls the brightness.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DemoSettings {
-    brightness: i8,
+    pub brightness: i8,
 }
 
 impl DemoSettings {
-    pub fn new() -> DemoSettings {
-        DemoSettings { brightness: 70 }
-    }
-
     /// Make it 10% brighter.
     pub fn inc(&mut self) {
         if self.brightness < 100 {
@@ -36,6 +32,12 @@ impl DemoSettings {
         if self.brightness >= 10 {
             self.brightness -= 10;
         }
+    }
+}
+
+impl Default for DemoSettings {
+    fn default() -> DemoSettings {
+        DemoSettings { brightness: 70 }
     }
 }
 
