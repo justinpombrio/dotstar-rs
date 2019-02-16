@@ -1,13 +1,16 @@
 use crate::color::ColorRgb;
 
-pub enum Timeout {
+pub enum Duration {
     Millis(usize),
-    Never,
+    Forever,
 }
 
-pub trait LightShow<Settings> {
-    fn next(&mut self, lights: &mut [ColorRgb]) -> Timeout;
-    fn update_settings(&mut self, settings: &Settings);
+pub trait LightShow {
+    type Settings;
+
+    fn new(settings: &Self::Settings) -> Self;
+    fn next(&mut self, lights: &mut [ColorRgb]) -> Duration;
+    fn update_settings(&mut self, settings: &Self::Settings);
 }
 
 pub trait LightStrip {

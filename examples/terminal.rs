@@ -1,4 +1,4 @@
-use dotstar::{ColorRgb, Demo, LightShow, LightStrip, Timeout};
+use dotstar::{ColorRgb, Demo, DemoSettings, Duration, LightShow, LightStrip};
 
 use core::time;
 
@@ -13,7 +13,8 @@ use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
 fn main() {
-    let mut demo = Demo::new();
+    let mut settings = DemoSettings::new();
+    let mut demo = Demo::new(&settings);
     let mut renderer = TerminalRenderer::new();
     let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];
     let mut never = false;
@@ -21,20 +22,30 @@ fn main() {
         if never {
             thread::sleep(time::Duration::from_millis(10));
         } else {
-            let timeout = demo.next(&mut lights);
+            let duration = demo.next(&mut lights);
             match renderer.show(&lights) {
                 Ok(()) => (),
                 Err(msg) => panic!("Failed to render light show! {}", msg),
             }
-            match timeout {
-                Timeout::Millis(ms) => thread::sleep(time::Duration::from_millis(ms as u64)),
-                Timeout::Never => {
+            match duration {
+                Duration::Millis(ms) => {
+                    thread::sleep(time::Duration::from_millis(ms as u64))
+                }
+                Duration::Forever => {
                     never = true;
                 }
             }
         }
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
+                Key::Up => {
+                    settings.inc();
+                    demo.update_settings(&settings);
+                }
+                Key::Down => {
+                    settings.dec();
+                    demo.update_settings(&settings);
+                }
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,
             }
@@ -59,7 +70,9 @@ impl LightStrip for TerminalRenderer {
 impl TerminalRenderer {
     pub fn new() -> TerminalRenderer {
         let stdin = termion::async_stdin().keys();
-        let mut stdout = screen::AlternateScreen::from(io::stdout().into_raw_mode().unwrap());
+        let mut stdout = screen::AlternateScreen::from(
+            io::stdout().into_raw_mode().unwrap(),
+        );
         write!(stdout, "{}", cursor::Hide).expect("Could not hide cursor");
         TerminalRenderer {
             stdin: stdin,

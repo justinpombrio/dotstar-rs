@@ -2,10 +2,64 @@ use crate::color::*;
 use crate::lights::*;
 
 const WAVELEN: isize = 60;
-const AMPLITUDE: isize = 40;
+const AMPLITUDE: isize = 80;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DemoSettings {
+    brightness: i8,
+}
+
+impl DemoSettings {
+    pub fn new() -> DemoSettings {
+        DemoSettings { brightness: 50 }
+    }
+
+    pub fn inc(&mut self) {
+        if self.brightness < 100 {
+            self.brightness += 10;
+        }
+    }
+
+    pub fn dec(&mut self) {
+        if self.brightness >= 10 {
+            self.brightness -= 10;
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Demo {
+    settings: DemoSettings,
     state: isize,
+}
+
+impl LightShow for Demo {
+    type Settings = DemoSettings;
+
+    fn new(settings: &DemoSettings) -> Demo {
+        Demo {
+            settings: *settings,
+            state: 0,
+        }
+    }
+
+    fn update_settings(&mut self, settings: &DemoSettings) {
+        self.settings = *settings;
+    }
+
+    fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
+        self.state += 1;
+        let deg = 360 * self.state / WAVELEN;
+        let l = self.settings.brightness;
+        let a = sin(deg, AMPLITUDE / 2);
+        let b = cos(deg, AMPLITUDE / 2);
+        lights[0] = lab(99, 0, 0);
+        lights[1] = lab(l, -b as i8, a as i8);
+        lights[2] = lab(l, a as i8, b as i8);
+        lights[3] = lab(l, b as i8, -a as i8);
+        lights[4] = lab(l, -a as i8, -b as i8);
+        Duration::Millis(100)
+    }
 }
 
 fn sin(deg: isize, multiplier: isize) -> isize {
@@ -25,29 +79,5 @@ fn cos(deg: isize, multiplier: isize) -> isize {
 }
 
 fn lab(l: i8, a: i8, b: i8) -> ColorRgb {
-    let ColorRgb { r, g, b } = ColorLab { l, a, b }.to_srgb_clamped();
-    ColorRgb { r, g, b }
-}
-
-impl Demo {
-    pub fn new() -> Demo {
-        Demo { state: 0 }
-    }
-}
-
-impl LightShow<()> for Demo {
-    fn update_settings(&mut self, _: &()) {}
-
-    fn next(&mut self, lights: &mut [ColorRgb]) -> Timeout {
-        self.state += 1;
-        let deg = 360 * self.state / WAVELEN;
-        let a = sin(deg, AMPLITUDE / 2);
-        let b = cos(deg, AMPLITUDE / 2);
-        lights[0] = lab(100, 0, 0);
-        lights[1] = lab(80, 0, 20);
-        lights[2] = lab(80, a as i8, b as i8);
-        lights[3] = lab(80, -20, 0);
-        lights[4] = lab(80, 0, -20);
-        Timeout::Millis(100)
-    }
+    ColorLab { l, a, b }.to_srgb_clamped()
 }
