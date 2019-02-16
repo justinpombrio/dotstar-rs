@@ -2,6 +2,7 @@
 
 pub extern crate embedded_hal;
 
+mod color_constants;
 mod color;
 mod demo_light_show;
 mod dotstar_strip;
