@@ -6,14 +6,10 @@ const AMPLITUDE: isize = 80;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DemoSettings {
-    brightness: i8,
+    pub brightness: i8,
 }
 
 impl DemoSettings {
-    pub fn new() -> DemoSettings {
-        DemoSettings { brightness: 50 }
-    }
-
     pub fn inc(&mut self) {
         if self.brightness < 100 {
             self.brightness += 10;
@@ -24,6 +20,12 @@ impl DemoSettings {
         if self.brightness >= 10 {
             self.brightness -= 10;
         }
+    }
+}
+
+impl Default for DemoSettings {
+    fn default() -> DemoSettings {
+        DemoSettings { brightness: 50 }
     }
 }
 
