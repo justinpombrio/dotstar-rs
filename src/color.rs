@@ -22,7 +22,7 @@ impl ColorLab {
     pub fn to_srgb_clamped(self) -> ColorRgb {
         match lab_to_srgb(self) {
             Ok(color) => color,
-            Err(color) => color
+            Err(color) => color,
         }
     }
 }
@@ -92,16 +92,16 @@ fn xyz_to_linear_rgb(xyz: ColorXyz) -> ColorLinearRgb {
 // Assumes that the range of LAB's L value is [0, 100]
 // and that the range of the output RGB values is [0, 256]
 fn linear_rgb_to_srgb(rgb: ColorLinearRgb) -> Result<ColorRgb, ColorRgb> {
-    let ColorLinearRgb{r, g, b} = rgb;
+    let ColorLinearRgb { r, g, b } = rgb;
     match (gamma(r), gamma(g), gamma(b)) {
-        (Ok(r), Ok(g), Ok(b))    => Ok(ColorRgb{r, g, b}),
-        (Ok(r), Ok(g), Err(b))   => Err(ColorRgb{r, g, b}),
-        (Ok(r), Err(g), Ok(b))   => Err(ColorRgb{r, g, b}),
-        (Ok(r), Err(g), Err(b))  => Err(ColorRgb{r, g, b}),
-        (Err(r), Ok(g), Ok(b))   => Err(ColorRgb{r, g, b}),
-        (Err(r), Ok(g), Err(b))  => Err(ColorRgb{r, g, b}),
-        (Err(r), Err(g), Ok(b))  => Err(ColorRgb{r, g, b}),
-        (Err(r), Err(g), Err(b)) => Err(ColorRgb{r, g, b}),
+        (Ok(r), Ok(g), Ok(b)) => Ok(ColorRgb { r, g, b }),
+        (Ok(r), Ok(g), Err(b)) => Err(ColorRgb { r, g, b }),
+        (Ok(r), Err(g), Ok(b)) => Err(ColorRgb { r, g, b }),
+        (Ok(r), Err(g), Err(b)) => Err(ColorRgb { r, g, b }),
+        (Err(r), Ok(g), Ok(b)) => Err(ColorRgb { r, g, b }),
+        (Err(r), Ok(g), Err(b)) => Err(ColorRgb { r, g, b }),
+        (Err(r), Err(g), Ok(b)) => Err(ColorRgb { r, g, b }),
+        (Err(r), Err(g), Err(b)) => Err(ColorRgb { r, g, b }),
     }
 }
 
@@ -111,10 +111,10 @@ fn linear_rgb_to_srgb(rgb: ColorLinearRgb) -> Result<ColorRgb, ColorRgb> {
 // Input scaled by 12 bits.
 fn gamma(u: i32) -> Result<u8, u8> {
     match LINEAR_RGB_TO_SRGB.binary_search(&u) {
-        Ok(i)    => Ok(i as u8),
-        Err(0)   => Err(0),
+        Ok(i) => Ok(i as u8),
+        Err(0) => Err(0),
         Err(256) => Err(255),
-        Err(i)   => Ok((i - 1) as u8)
+        Err(i) => Ok((i - 1) as u8),
     }
 }
 
@@ -127,12 +127,12 @@ mod tests {
     use super::*;
 
     fn convert(l: i8, a: i8, b: i8) -> (u8, u8, u8) {
-        let ColorRgb{r, g, b} = ColorLab{l, a, b}.to_srgb().unwrap();
+        let ColorRgb { r, g, b } = ColorLab { l, a, b }.to_srgb().unwrap();
         (r, g, b)
     }
 
     fn clamp(l: i8, a: i8, b: i8) -> (u8, u8, u8) {
-        let ColorRgb{r, g, b} = ColorLab{l, a, b}.to_srgb().unwrap_err();
+        let ColorRgb { r, g, b } = ColorLab { l, a, b }.to_srgb().unwrap_err();
         (r, g, b)
     }
 
