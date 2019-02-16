@@ -25,7 +25,7 @@ fn cos(deg: isize, multiplier: isize) -> isize {
 }
 
 fn lab(l: i8, a: i8, b: i8) -> ColorRgb {
-    let ColorRgb { r, g, b } = ColorLab { l, a, b }.into();
+    let ColorRgb { r, g, b } = ColorLab { l, a, b }.to_srgb_clamped();
     ColorRgb { r, g, b }
 }
 
