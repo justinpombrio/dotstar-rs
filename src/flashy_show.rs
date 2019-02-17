@@ -1,15 +1,34 @@
 use crate::color::*;
+use crate::int_math::{cos, inc, sin};
 use crate::lights::*;
 
 /// A demo lightshow with lights of randomly varying hue, and controllable
 /// brightness.
 pub struct FlashyShow {
+    radius: i8,
+    brightness: i8,
     state: isize,
+}
+
+impl FlashyShow {
+    pub fn change_brightness(&mut self, delta: i8) {
+        inc(&mut self.brightness, delta, 0, 99);
+        self.radius = ColorLab {
+            l: self.brightness,
+            a: 0,
+            b: 0,
+        }
+        .max_radius();
+    }
 }
 
 impl LightShow for FlashyShow {
     fn new() -> FlashyShow {
-        FlashyShow { state: 0 }
+        FlashyShow {
+            state: 0,
+            brightness: 70,
+            radius: 40,
+        }
     }
 
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
@@ -20,29 +39,13 @@ impl LightShow for FlashyShow {
         for i in 0..lights.len() {
             deg = (deg + 137) % 360;
             lights[i] = ColorLab {
-                l: 70,
-                a: sin(deg, 40) as i8,
-                b: cos(deg, 40) as i8,
+                l: self.brightness,
+                a: sin(deg, self.radius as isize) as i8,
+                b: cos(deg, self.radius as isize) as i8,
             }
             .to_srgb_clamped();
         }
         // Wait
         Duration::Millis(400)
     }
-}
-
-fn sin(deg: isize, multiplier: isize) -> isize {
-    if deg < 0 {
-        return -sin(-deg, multiplier);
-    }
-    let deg = deg % 360;
-    if deg > 180 {
-        return -sin(360 - deg, multiplier);
-    }
-    // Thanks, Bhaskara I
-    multiplier * 4 * deg * (180 - deg) / (40500 - deg * (180 - deg))
-}
-
-fn cos(deg: isize, multiplier: isize) -> isize {
-    sin(90 - deg, multiplier)
 }

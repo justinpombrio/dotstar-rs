@@ -49,8 +49,20 @@ fn main() {
                 Key::Char('g') => circle_show.change_red(-5),
                 Key::Char('y') => circle_show.change_yellow(5),
                 Key::Char('b') => circle_show.change_yellow(-5),
-                Key::Up => circle_show.change_brightness(10),
-                Key::Down => circle_show.change_brightness(-10),
+                Key::Up => {
+                    if renderer.mode {
+                        circle_show.change_brightness(10);
+                    } else {
+                        flashy_show.change_brightness(10);
+                    }
+                }
+                Key::Down => {
+                    if renderer.mode {
+                        circle_show.change_brightness(-10)
+                    } else {
+                        flashy_show.change_brightness(-10);
+                    }
+                }
                 Key::Right => circle_show.change_color_variation(10),
                 Key::Left => circle_show.change_color_variation(-10),
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,

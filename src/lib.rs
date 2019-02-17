@@ -7,6 +7,7 @@ mod color;
 mod color_constants;
 mod dotstar_strip;
 mod flashy_show;
+mod int_math;
 mod lights;
 mod rng;
 
