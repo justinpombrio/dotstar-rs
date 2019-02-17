@@ -6,11 +6,8 @@ pub enum Duration {
 }
 
 pub trait LightShow {
-    type Settings;
-
-    fn new(settings: &Self::Settings) -> Self;
+    fn new() -> Self;
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration;
-    fn update_settings(&mut self, settings: &Self::Settings);
 }
 
 pub trait LightStrip {

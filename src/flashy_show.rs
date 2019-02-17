@@ -8,13 +8,9 @@ pub struct FlashyShow {
 }
 
 impl LightShow for FlashyShow {
-    type Settings = ();
-
-    fn new(_: &()) -> FlashyShow {
+    fn new() -> FlashyShow {
         FlashyShow { state: 0 }
     }
-
-    fn update_settings(&mut self, _: &()) {}
 
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state

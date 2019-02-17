@@ -45,46 +45,43 @@ impl ColorLab {
         if self.a > 40 || self.a < -40 || self.b > 40 || self.b < -40 {
             return 0;
         }
-        let mut max_radius = 100;
+        let mut max_radius_sq: i32 = 1000000;
         for a in -40..40 {
             for b in -40..40 {
-                let radius = sqrt(a * a + b * b);
+                let radius_sq = a * a + b * b;
+                if radius_sq >= max_radius_sq {
+                    break;
+                }
                 let color = ColorLab {
                     l: self.l,
                     a: self.a + a as i8,
                     b: self.b + b as i8,
                 };
-                if radius < max_radius && !color.is_valid() {
-                    max_radius = radius;
+                if !color.is_valid() {
+                    max_radius_sq = radius_sq;
                 }
             }
         }
-        max_radius
+        sqrt(max_radius_sq)
     }
 }
 
 impl ColorRgb {
     pub fn black() -> ColorRgb {
-        ColorRgb {
-            r: 0,
-            g: 0,
-            b: 0,
-        }
+        ColorRgb { r: 0, g: 0, b: 0 }
     }
 
     /// Apply gamma correction. This is needed when displaying the color on an
     /// RGB LED. Other devices like a computer monitor already have the
     /// correction built-in.
     pub fn correct_gamma(&self) -> ColorRgb {
-        ColorRgb{
+        ColorRgb {
             r: GAMMA_CORRECTION[self.r as usize],
             g: GAMMA_CORRECTION[self.g as usize],
-            b: GAMMA_CORRECTION[self.b as usize]
+            b: GAMMA_CORRECTION[self.b as usize],
         }
     }
-
 }
-
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 struct ColorXyz {

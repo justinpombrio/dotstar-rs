@@ -1,6 +1,5 @@
 use dotstar::{
-    CircleShow, CircleShowSettings, ColorRgb, Duration, FlashyShow, LightShow,
-    LightStrip,
+    CircleShow, ColorRgb, Duration, FlashyShow, LightShow, LightStrip,
 };
 
 use core::time;
@@ -16,9 +15,8 @@ use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
 fn main() {
-    let mut circle_settings = CircleShowSettings::default();
-    let mut circle_demo = CircleShow::new(&circle_settings);
-    let mut flashy_demo = FlashyShow::new(&());
+    let mut circle_show = CircleShow::new();
+    let mut flashy_show = FlashyShow::new();
     let mut renderer = TerminalRenderer::new();
     let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];
     let mut forever = false;
@@ -27,9 +25,9 @@ fn main() {
             thread::sleep(time::Duration::from_millis(10));
         } else {
             let duration = if renderer.mode {
-                circle_demo.next(&mut lights)
+                circle_show.next(&mut lights)
             } else {
-                flashy_demo.next(&mut lights)
+                flashy_show.next(&mut lights)
             };
             match renderer.show(&lights) {
                 Ok(()) => (),
@@ -46,50 +44,20 @@ fn main() {
         }
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
-                Key::Char('m') => {
-                    renderer.mode = !renderer.mode;
-                }
-                Key::Char('r') => {
-                    inc(&mut circle_settings.center_color.a, 5);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Char('g') => {
-                    inc(&mut circle_settings.center_color.a, -5);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Char('y') => {
-                    inc(&mut circle_settings.center_color.b, 5);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Char('b') => {
-                    inc(&mut circle_settings.center_color.b, -5);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Up => {
-                    inc(&mut circle_settings.center_color.l, 10);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Down => {
-                    inc(&mut circle_settings.center_color.l, -10);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Right => {
-                    inc(&mut circle_settings.color_variation, 10);
-                    circle_demo.update_settings(&circle_settings);
-                }
-                Key::Left => {
-                    inc(&mut circle_settings.color_variation, -10);
-                    circle_demo.update_settings(&circle_settings);
-                }
+                Key::Char('m') => renderer.mode = !renderer.mode,
+                Key::Char('r') => circle_show.change_red(5),
+                Key::Char('g') => circle_show.change_red(-5),
+                Key::Char('y') => circle_show.change_yellow(5),
+                Key::Char('b') => circle_show.change_yellow(-5),
+                Key::Up => circle_show.change_brightness(10),
+                Key::Down => circle_show.change_brightness(-10),
+                Key::Right => circle_show.change_color_variation(10),
+                Key::Left => circle_show.change_color_variation(-10),
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,
             }
         }
     }
-}
-
-fn inc(x: &mut i8, delta: i8) {
-    *x = x.saturating_add(delta);
 }
 
 pub struct TerminalRenderer {

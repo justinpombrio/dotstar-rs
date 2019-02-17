@@ -17,66 +17,81 @@ const DURATION: u32 = 10;
 /// - **Color_variation:** How much the color varies between the lights, as a
 ///   percent of how high it could be at max.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct CircleShowSettings {
+pub struct Settings {
     pub center_color: ColorLab,
     pub hue_change_rate: i8,
     pub color_variation: i8,
 }
 
-impl Default for CircleShowSettings {
-    fn default() -> CircleShowSettings {
-        CircleShowSettings {
-            center_color: ColorLab { l: 70, a: 0, b: 0 },
-            hue_change_rate: 2,
-            color_variation: 100,
-        }
-    }
-}
-
 /// A demo lightshow with lights of randomly varying hue, and controllable
 /// brightness.
 pub struct CircleShow {
-    settings: CircleShowSettings,
+    max_radius: isize,
+    settings: Settings,
     rng: Rng,
     state: [isize; SIZE], // hue angle in degrees
 }
 
-impl LightShow for CircleShow {
-    type Settings = CircleShowSettings;
+impl CircleShow {
+    pub fn change_red(&mut self, delta: i8) {
+        inc(&mut self.settings.center_color.a, delta, -40, 40);
+        self.calculate_radius();
+    }
 
-    fn new(settings: &CircleShowSettings) -> CircleShow {
+    pub fn change_yellow(&mut self, delta: i8) {
+        inc(&mut self.settings.center_color.b, delta, -40, 40);
+        self.calculate_radius();
+    }
+
+    pub fn change_brightness(&mut self, delta: i8) {
+        inc(&mut self.settings.center_color.l, delta, 0, 99);
+        self.calculate_radius();
+    }
+
+    pub fn change_color_variation(&mut self, delta: i8) {
+        inc(&mut self.settings.color_variation, delta, 0, 100);
+    }
+
+    fn calculate_radius(&mut self) {
+        self.max_radius = self.settings.center_color.max_radius() as isize;
+    }
+}
+
+impl LightShow for CircleShow {
+    fn new() -> CircleShow {
         let mut rng = Rng::new(161051);
         let mut state = [0; SIZE];
         for i in 0..SIZE {
             state[i] = rng.next_in_range(0, 360) as isize;
         }
-        CircleShow {
-            settings: *settings,
+        let mut show = CircleShow {
+            max_radius: 0,
+            settings: Settings {
+                center_color: ColorLab { l: 70, a: 0, b: 0 },
+                hue_change_rate: 2,
+                color_variation: 100,
+            },
             rng: rng,
             state: state,
-        }
-    }
-
-    fn update_settings(&mut self, settings: &CircleShowSettings) {
-        self.settings = *settings;
+        };
+        show.calculate_radius();
+        show
     }
 
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state (random walk on hue circles)
         for i in 0..SIZE {
-            let var = self.settings.hue_change_rate;
-            self.state[i] +=
-                self.rng.next_in_range(-var as i32, (var + 1) as i32) as isize;
+            let var = self.settings.hue_change_rate as i32;
+            self.state[i] += self.rng.next_in_range(-var, var + 1) as isize;
         }
         // Show the lights (cycle as needed)
         for i in 0..lights.len() {
             let deg = self.state[i % SIZE];
             let center = self.settings.center_color;
             let colorfulness = self.settings.color_variation;
-            let max_radius = center.max_radius() as isize;
-            let radius = colorfulness as isize * max_radius / 100;
-            let a = sin(deg, radius) as i8 + center.a;
-            let b = cos(deg, radius) as i8 + center.b;
+            let radius = colorfulness as isize * self.max_radius / 100;
+            let a = (sin(deg, radius) as i8).wrapping_add(center.a);
+            let b = (cos(deg, radius) as i8).wrapping_add(center.b);
             let color = ColorLab { l: center.l, a, b }.to_srgb_clamped();
             lights[i] = color;
         }
@@ -99,4 +114,15 @@ fn sin(deg: isize, multiplier: isize) -> isize {
 
 fn cos(deg: isize, multiplier: isize) -> isize {
     sin(90 - deg, multiplier)
+}
+
+fn inc(x: &mut i8, delta: i8, min: i8, max: i8) {
+    let new_x = x.saturating_add(delta);
+    if new_x < min {
+        *x = min;
+    } else if new_x > max {
+        *x = max;
+    } else {
+        *x = new_x;
+    }
 }

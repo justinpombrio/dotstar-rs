@@ -10,7 +10,7 @@ mod flashy_show;
 mod lights;
 mod rng;
 
-pub use self::circle_show::{CircleShow, CircleShowSettings};
+pub use self::circle_show::CircleShow;
 pub use self::color::*;
 pub use self::dotstar_strip::DotstarStrip;
 pub use self::flashy_show::FlashyShow;
