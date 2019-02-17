@@ -9,13 +9,12 @@ const SIZE: usize = 64;
 // How long to wait between light updates, in ms.
 const DURATION: u32 = 10;
 
-// How quickly to vary hue.
-const VARIATION: i32 = 2;
-
 /// Controls the brightness.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DemoSettings {
     pub brightness: i8,
+    pub variation: i8,
+    pub saturation: i8
 }
 
 impl DemoSettings {
@@ -32,11 +31,43 @@ impl DemoSettings {
             self.brightness -= 10;
         }
     }
+
+    /// Make it vary faster.
+    pub fn inc_variation(&mut self) {
+        if self.variation < 100 {
+            self.variation += 1;
+        }
+    }
+
+    /// Make it vary slower.
+    pub fn dec_variation(&mut self) {
+        if self.variation >= 1 {
+            self.variation -= 1;
+        }
+    }
+
+    /// Make it more saturated.
+    pub fn inc_saturation(&mut self) {
+        if self.saturation < 100 {
+            self.saturation += 10;
+        }
+    }
+    
+    /// Make it less saturated.
+    pub fn dec_saturation(&mut self) {
+        if self.saturation >= 10 {
+            self.saturation -= 10;
+        }
+    }
 }
 
 impl Default for DemoSettings {
     fn default() -> DemoSettings {
-        DemoSettings { brightness: 70 }
+        DemoSettings {
+            brightness: 70,
+            variation: 2,
+            saturation: 100
+        }
     }
 }
 
@@ -71,13 +102,15 @@ impl LightShow for Demo {
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state (random walk on hue circles)
         for i in 0..SIZE {
-            self.state[i] += self.rng.next_in_range(-VARIATION, VARIATION + 1) as isize;
+            let var = self.settings.variation;
+            self.state[i] += self.rng.next_in_range(-var as i32, (var + 1) as i32) as isize;
         }
         // Show the lights (cycle if needed)
         for i in 0..lights.len() {
             let l = self.settings.brightness;
             let deg = self.state[i % SIZE];
-            let radius = lab_radius(l).unwrap_or(0) as isize;
+            let max_radius = lab_radius(l).unwrap_or(0);
+            let radius = (self.settings.saturation as i32 * max_radius as i32 / 100) as isize;
             let a = sin(deg, radius) as i8;
             let b = cos(deg, radius) as i8;
             let color = ColorLab { l, a, b }.to_srgb_clamped();

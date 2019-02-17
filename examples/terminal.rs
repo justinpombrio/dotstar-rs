@@ -46,6 +46,14 @@ fn main() {
                     settings.dec();
                     demo.update_settings(&settings);
                 }
+                Key::Right => {
+                    settings.inc_saturation();
+                    demo.update_settings(&settings);
+                }
+                Key::Left => {
+                    settings.dec_saturation();
+                    demo.update_settings(&settings);
+                }
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,
             }
