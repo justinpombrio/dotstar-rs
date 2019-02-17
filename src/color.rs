@@ -34,15 +34,32 @@ impl ColorLab {
             Err(color) => color,
         }
     }
-}
 
-/// For a LAB L, find the radius of the largest valid A,B circle centered at (L,
-/// 0, 0).
-pub fn lab_radius(l: i8) -> Option<i8> {
-    if l < 0 || l >= 100 {
-        None
-    } else {
-        Some(LAB_RADIUS[l as usize])
+    /// Check if this is a valid (i.e., representable) color.
+    pub fn is_valid(&self) -> bool {
+        lab_to_srgb(*self).is_ok()
+    }
+
+    /// Find the radius of the largest valid A,B circle centered on this color.
+    pub fn max_radius(&self) -> i8 {
+        if self.a > 40 || self.a < -40 || self.b > 40 || self.b < -40 {
+            return 0;
+        }
+        let mut max_radius = 100;
+        for a in -40..40 {
+            for b in -40..40 {
+                let radius = sqrt(a * a + b * b);
+                let color = ColorLab {
+                    l: self.l,
+                    a: self.a + a as i8,
+                    b: self.b + b as i8,
+                };
+                if radius < max_radius && !color.is_valid() {
+                    max_radius = radius;
+                }
+            }
+        }
+        max_radius
     }
 }
 
@@ -141,6 +158,14 @@ fn lab_to_srgb(lab: ColorLab) -> Result<ColorRgb, ColorRgb> {
     linear_rgb_to_srgb(xyz_to_linear_rgb(lab_to_xyz(lab)))
 }
 
+fn sqrt(x: i32) -> i8 {
+    match SQUARES.binary_search(&x) {
+        Ok(i) => i as i8,
+        Err(128) => 127 as i8,
+        Err(i) => i as i8,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,31 +226,3 @@ mod tests {
         clamp(127, 127, 127);
     }
 }
-
-/*
-fn compute_lab_radius_table() {
-    for l in 0..100 {
-        let mut max_radius: i8 = 0;
-        for r in 0..100 {
-            let mut valid = true;
-            'outer: for a in -100..100 {
-                for b in -100..100 {
-                    let a32 = a as f32;
-                    let b32 = b as f32;
-                    let radius = (a32 * a32 + b32 * b32).sqrt();
-                    if radius <= r as f32
-                        && (ColorLab { l, a, b }).to_srgb().is_err()
-                    {
-                        valid = false;
-                        break 'outer;
-                    }
-                }
-            }
-            if valid {
-                max_radius = r;
-            }
-        }
-        println!("{}", max_radius);
-    }
-}
-*/

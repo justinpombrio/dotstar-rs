@@ -9,64 +9,26 @@ const SIZE: usize = 64;
 // How long to wait between light updates, in ms.
 const DURATION: u32 = 10;
 
-/// Controls the brightness.
+/// Settings for this demo light show.
+///
+/// - **Center_color:** The average color of the lights.
+/// - **Hue_change_rate:** How much the hue of the lights changes over time, as
+///   a max number of degrees per 100ms. (The hues take a random walk.)
+/// - **Color_variation:** How much the color varies between the lights, as a
+///   percent of how high it could be at max.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DemoSettings {
-    pub brightness: i8,
-    pub variation: i8,
-    pub saturation: i8
-}
-
-impl DemoSettings {
-    /// Make it 10% brighter.
-    pub fn inc(&mut self) {
-        if self.brightness < 100 {
-            self.brightness += 10;
-        }
-    }
-
-    /// Make it 10% dimmer.
-    pub fn dec(&mut self) {
-        if self.brightness >= 10 {
-            self.brightness -= 10;
-        }
-    }
-
-    /// Make it vary faster.
-    pub fn inc_variation(&mut self) {
-        if self.variation < 100 {
-            self.variation += 1;
-        }
-    }
-
-    /// Make it vary slower.
-    pub fn dec_variation(&mut self) {
-        if self.variation >= 1 {
-            self.variation -= 1;
-        }
-    }
-
-    /// Make it more saturated.
-    pub fn inc_saturation(&mut self) {
-        if self.saturation < 100 {
-            self.saturation += 10;
-        }
-    }
-    
-    /// Make it less saturated.
-    pub fn dec_saturation(&mut self) {
-        if self.saturation >= 10 {
-            self.saturation -= 10;
-        }
-    }
+    pub center_color: ColorLab,
+    pub hue_change_rate: i8,
+    pub color_variation: i8,
 }
 
 impl Default for DemoSettings {
     fn default() -> DemoSettings {
         DemoSettings {
-            brightness: 70,
-            variation: 2,
-            saturation: 100
+            center_color: ColorLab { l: 70, a: 0, b: 0 },
+            hue_change_rate: 2,
+            color_variation: 100,
         }
     }
 }
@@ -102,18 +64,20 @@ impl LightShow for Demo {
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state (random walk on hue circles)
         for i in 0..SIZE {
-            let var = self.settings.variation;
-            self.state[i] += self.rng.next_in_range(-var as i32, (var + 1) as i32) as isize;
+            let var = self.settings.hue_change_rate;
+            self.state[i] +=
+                self.rng.next_in_range(-var as i32, (var + 1) as i32) as isize;
         }
         // Show the lights (cycle if needed)
         for i in 0..lights.len() {
-            let l = self.settings.brightness;
             let deg = self.state[i % SIZE];
-            let max_radius = lab_radius(l).unwrap_or(0);
-            let radius = (self.settings.saturation as i32 * max_radius as i32 / 100) as isize;
-            let a = sin(deg, radius) as i8;
-            let b = cos(deg, radius) as i8;
-            let color = ColorLab { l, a, b }.to_srgb_clamped();
+            let center = self.settings.center_color;
+            let colorfulness = self.settings.color_variation;
+            let max_radius = center.max_radius() as isize;
+            let radius = colorfulness as isize * max_radius / 100;
+            let a = sin(deg, radius) as i8 + center.a;
+            let b = cos(deg, radius) as i8 + center.b;
+            let color = ColorLab { l: center.l, a, b }.to_srgb_clamped();
             lights[i] = color;
         }
         // Wait

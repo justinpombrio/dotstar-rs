@@ -38,20 +38,36 @@ fn main() {
         }
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
+                Key::Char('r') => {
+                    inc(&mut settings.center_color.a, 5);
+                    demo.update_settings(&settings);
+                }
+                Key::Char('g') => {
+                    inc(&mut settings.center_color.a, -5);
+                    demo.update_settings(&settings);
+                }
+                Key::Char('y') => {
+                    inc(&mut settings.center_color.b, 5);
+                    demo.update_settings(&settings);
+                }
+                Key::Char('b') => {
+                    inc(&mut settings.center_color.b, -5);
+                    demo.update_settings(&settings);
+                }
                 Key::Up => {
-                    settings.inc();
+                    inc(&mut settings.center_color.l, 10);
                     demo.update_settings(&settings);
                 }
                 Key::Down => {
-                    settings.dec();
+                    inc(&mut settings.center_color.l, -10);
                     demo.update_settings(&settings);
                 }
                 Key::Right => {
-                    settings.inc_saturation();
+                    inc(&mut settings.color_variation, 10);
                     demo.update_settings(&settings);
                 }
                 Key::Left => {
-                    settings.dec_saturation();
+                    inc(&mut settings.color_variation, -10);
                     demo.update_settings(&settings);
                 }
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
@@ -59,6 +75,10 @@ fn main() {
             }
         }
     }
+}
+
+fn inc(x: &mut i8, delta: i8) {
+    *x = x.saturating_add(delta);
 }
 
 pub struct TerminalRenderer {
