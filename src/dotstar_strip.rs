@@ -29,9 +29,11 @@ impl<SPI: spi::Write<u8>> DotstarStrip<SPI> {
 }
 
 fn led_frame(light: &ColorRgb) -> [u8; 4] {
+    let light = light.correct_gamma();
     let prefix_and_global_brightness = 255;
     [prefix_and_global_brightness, light.b, light.g, light.r]
 }
+
 
 fn ceiling(num: usize, divisor: usize) -> usize {
     // Ceiling of integer division

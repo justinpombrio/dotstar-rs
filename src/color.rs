@@ -63,6 +63,29 @@ impl ColorLab {
     }
 }
 
+impl ColorRgb {
+    pub fn black() -> ColorRgb {
+        ColorRgb {
+            r: 0,
+            g: 0,
+            b: 0,
+        }
+    }
+
+    /// Apply gamma correction. This is needed when displaying the color on an
+    /// RGB LED. Other devices like a computer monitor already have the
+    /// correction built-in.
+    pub fn correct_gamma(&self) -> ColorRgb {
+        ColorRgb{
+            r: GAMMA_CORRECTION[self.r as usize],
+            g: GAMMA_CORRECTION[self.g as usize],
+            b: GAMMA_CORRECTION[self.b as usize]
+        }
+    }
+
+}
+
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 struct ColorXyz {
     x: i32,
