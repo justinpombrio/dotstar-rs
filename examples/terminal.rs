@@ -21,13 +21,12 @@ fn main() {
     let mut flashy_demo = FlashyShow::new(&());
     let mut renderer = TerminalRenderer::new();
     let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];
-    let mut mode = true;
     let mut forever = false;
     'outer: loop {
         if forever {
             thread::sleep(time::Duration::from_millis(10));
         } else {
-            let duration = if mode {
+            let duration = if renderer.mode {
                 circle_demo.next(&mut lights)
             } else {
                 flashy_demo.next(&mut lights)
@@ -48,7 +47,7 @@ fn main() {
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
                 Key::Char('m') => {
-                    mode = !mode;
+                    renderer.mode = !renderer.mode;
                 }
                 Key::Char('r') => {
                     inc(&mut circle_settings.center_color.a, 5);
@@ -96,6 +95,7 @@ fn inc(x: &mut i8, delta: i8) {
 pub struct TerminalRenderer {
     pub stdin: input::Keys<termion::AsyncReader>,
     stdout: screen::AlternateScreen<raw::RawTerminal<io::Stdout>>,
+    mode: bool,
 }
 
 impl LightStrip for TerminalRenderer {
@@ -103,6 +103,7 @@ impl LightStrip for TerminalRenderer {
 
     fn show(&mut self, lights: &[ColorRgb]) -> io::Result<()> {
         write_lights(&mut self.stdout, &lights)?;
+        write_instructions(&mut self.stdout, self.mode)?;
         self.stdout.flush()
     }
 }
@@ -117,6 +118,7 @@ impl TerminalRenderer {
         TerminalRenderer {
             stdin: stdin,
             stdout: stdout,
+            mode: true,
         }
     }
 }
@@ -150,3 +152,39 @@ where
     }
     Ok(())
 }
+
+fn write_instructions<W>(f: &mut W, mode: bool) -> io::Result<()>
+where
+    W: Write,
+{
+    write!(f, "{}", color::Fg(color::Rgb(255, 255, 150)))?;
+    let mode_name = if mode { "circle show" } else { "flashy show" };
+    write!(f, "{}", cursor::Goto(5, 5))?;
+    write!(f, "Current mode: {}", mode_name)?;
+    write!(f, "{}", cursor::Goto(5, 6))?;
+    write!(f, "------------------------")?;
+    for (i, (r, g, b, msg)) in LINES.iter().enumerate() {
+        let line_num = (i + 8) as u16;
+        write!(f, "{}", cursor::Goto(5, line_num))?;
+        write!(f, "{}", color::Fg(color::Rgb(*r, *g, *b)))?;
+        write!(f, "{}", msg)?;
+    }
+    Ok(())
+}
+
+static LINES: [(u8, u8, u8, &'static str); 14] = [
+    (255, 255, 255, "m: switch mode (circle vs. flashy)"),
+    (255, 255, 255, "q,Esc: quit"),
+    (0, 0, 0, ""),
+    (255, 255, 150, "Settings for circle mode"),
+    (255, 255, 150, "------------------------"),
+    (0, 0, 0, ""),
+    (255, 255, 255, "→: increase color variation"),
+    (255, 255, 255, "←: decrease color variation"),
+    (255, 255, 255, "↑: increase brightness"),
+    (255, 255, 255, "↓: decrease brightness"),
+    (255, 255, 255, "r: more red"),
+    (255, 255, 255, "g: more green"),
+    (255, 255, 255, "b: more blue"),
+    (255, 255, 255, "y: more yellow"),
+];
