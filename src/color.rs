@@ -45,24 +45,30 @@ impl ColorLab {
         if self.a > 40 || self.a < -40 || self.b > 40 || self.b < -40 {
             return 0;
         }
-        let mut max_radius_sq: i32 = 1000000;
-        for a in -40..40 {
-            for b in -40..40 {
-                let radius_sq = a * a + b * b;
-                if radius_sq >= max_radius_sq {
-                    break;
-                }
-                let color = ColorLab {
-                    l: self.l,
-                    a: self.a + a as i8,
-                    b: self.b + b as i8,
-                };
+        for radius in 0..100 {
+            // Test only eight points on the circle, because speed is important.
+            let hr = ((radius as i32) * 7071 / 10000) as i8; // sqrt(2) * radius
+            let mut colors = [*self; 8];
+            colors[0].a += radius;
+            colors[1].a -= radius;
+            colors[2].b += radius;
+            colors[2].b -= radius;
+            colors[3].a += hr;
+            colors[3].b += hr;
+            colors[4].a += hr;
+            colors[4].b -= hr;
+            colors[5].a -= hr;
+            colors[5].b += hr;
+            colors[6].a -= hr;
+            colors[6].b -= hr;
+            for color in &colors {
                 if !color.is_valid() {
-                    max_radius_sq = radius_sq;
+                    return radius;
                 }
             }
         }
-        sqrt(max_radius_sq)
+        // Something's gone wrong; return 0 to be safe.
+        return 0;
     }
 }
 
@@ -176,14 +182,6 @@ fn gamma(u: i32) -> Result<u8, u8> {
 
 fn lab_to_srgb(lab: ColorLab) -> Result<ColorRgb, ColorRgb> {
     linear_rgb_to_srgb(xyz_to_linear_rgb(lab_to_xyz(lab)))
-}
-
-fn sqrt(x: i32) -> i8 {
-    match SQUARES.binary_search(&x) {
-        Ok(i) => i as i8,
-        Err(128) => 127 as i8,
-        Err(i) => i as i8,
-    }
 }
 
 #[cfg(test)]

@@ -24,3 +24,15 @@ pub fn inc(x: &mut i8, delta: i8, min: i8, max: i8) {
         *x = new_x;
     }
 }
+
+#[test]
+fn test_inc() {
+    let mut x: i8 = 0;
+    inc(&mut x, 100, -10, 10);
+    assert_eq!(x, 10);
+    inc(&mut x, -21, -10, 10);
+    assert_eq!(x, -10);
+    x = 0;
+    inc(&mut x, -10, -10, 10);
+    assert_eq!(x, -10);
+}
