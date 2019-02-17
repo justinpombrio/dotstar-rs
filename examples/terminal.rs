@@ -1,4 +1,7 @@
-use dotstar::{ColorRgb, Demo, DemoSettings, Duration, LightShow, LightStrip};
+use dotstar::{
+    CircleShow, CircleShowSettings, ColorRgb, Duration, FlashyShow, LightShow,
+    LightStrip,
+};
 
 use core::time;
 
@@ -13,16 +16,22 @@ use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
 fn main() {
-    let mut settings = DemoSettings::default();
-    let mut demo = Demo::new(&settings);
+    let mut circle_settings = CircleShowSettings::default();
+    let mut circle_demo = CircleShow::new(&circle_settings);
+    let mut flashy_demo = FlashyShow::new(&());
     let mut renderer = TerminalRenderer::new();
     let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];
-    let mut never = false;
+    let mut mode = true;
+    let mut forever = false;
     'outer: loop {
-        if never {
+        if forever {
             thread::sleep(time::Duration::from_millis(10));
         } else {
-            let duration = demo.next(&mut lights);
+            let duration = if mode {
+                circle_demo.next(&mut lights)
+            } else {
+                flashy_demo.next(&mut lights)
+            };
             match renderer.show(&lights) {
                 Ok(()) => (),
                 Err(msg) => panic!("Failed to render light show! {}", msg),
@@ -32,43 +41,46 @@ fn main() {
                     thread::sleep(time::Duration::from_millis(ms as u64))
                 }
                 Duration::Forever => {
-                    never = true;
+                    forever = true;
                 }
             }
         }
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
+                Key::Char('m') => {
+                    mode = !mode;
+                }
                 Key::Char('r') => {
-                    inc(&mut settings.center_color.a, 5);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.center_color.a, 5);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Char('g') => {
-                    inc(&mut settings.center_color.a, -5);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.center_color.a, -5);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Char('y') => {
-                    inc(&mut settings.center_color.b, 5);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.center_color.b, 5);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Char('b') => {
-                    inc(&mut settings.center_color.b, -5);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.center_color.b, -5);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Up => {
-                    inc(&mut settings.center_color.l, 10);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.center_color.l, 10);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Down => {
-                    inc(&mut settings.center_color.l, -10);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.center_color.l, -10);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Right => {
-                    inc(&mut settings.color_variation, 10);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.color_variation, 10);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Left => {
-                    inc(&mut settings.color_variation, -10);
-                    demo.update_settings(&settings);
+                    inc(&mut circle_settings.color_variation, -10);
+                    circle_demo.update_settings(&circle_settings);
                 }
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,

@@ -17,15 +17,15 @@ const DURATION: u32 = 10;
 /// - **Color_variation:** How much the color varies between the lights, as a
 ///   percent of how high it could be at max.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct DemoSettings {
+pub struct CircleShowSettings {
     pub center_color: ColorLab,
     pub hue_change_rate: i8,
     pub color_variation: i8,
 }
 
-impl Default for DemoSettings {
-    fn default() -> DemoSettings {
-        DemoSettings {
+impl Default for CircleShowSettings {
+    fn default() -> CircleShowSettings {
+        CircleShowSettings {
             center_color: ColorLab { l: 70, a: 0, b: 0 },
             hue_change_rate: 2,
             color_variation: 100,
@@ -35,29 +35,29 @@ impl Default for DemoSettings {
 
 /// A demo lightshow with lights of randomly varying hue, and controllable
 /// brightness.
-pub struct Demo {
-    settings: DemoSettings,
+pub struct CircleShow {
+    settings: CircleShowSettings,
     rng: Rng,
     state: [isize; SIZE], // hue angle in degrees
 }
 
-impl LightShow for Demo {
-    type Settings = DemoSettings;
+impl LightShow for CircleShow {
+    type Settings = CircleShowSettings;
 
-    fn new(settings: &DemoSettings) -> Demo {
+    fn new(settings: &CircleShowSettings) -> CircleShow {
         let mut rng = Rng::new(161051);
         let mut state = [0; SIZE];
         for i in 0..SIZE {
             state[i] = rng.next_in_range(0, 360) as isize;
         }
-        Demo {
+        CircleShow {
             settings: *settings,
             rng: rng,
             state: state,
         }
     }
 
-    fn update_settings(&mut self, settings: &DemoSettings) {
+    fn update_settings(&mut self, settings: &CircleShowSettings) {
         self.settings = *settings;
     }
 
@@ -68,7 +68,7 @@ impl LightShow for Demo {
             self.state[i] +=
                 self.rng.next_in_range(-var as i32, (var + 1) as i32) as isize;
         }
-        // Show the lights (cycle if needed)
+        // Show the lights (cycle as needed)
         for i in 0..lights.len() {
             let deg = self.state[i % SIZE];
             let center = self.settings.center_color;
