@@ -1,7 +1,6 @@
 use crate::color::*;
 use crate::lights::*;
-use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use crate::rng::Rng;
 
 // Number of lights to store in state. In there are more lights in the actual
 // strip, cycle these.
@@ -11,7 +10,7 @@ const SIZE: usize = 64;
 const DURATION: u32 = 10;
 
 // How quickly to vary hue.
-const VARIATION: isize = 2;
+const VARIATION: i32 = 2;
 
 /// Controls the brightness.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -45,7 +44,7 @@ impl Default for DemoSettings {
 /// brightness.
 pub struct Demo {
     settings: DemoSettings,
-    rng: StdRng,
+    rng: Rng,
     state: [isize; SIZE], // hue angle in degrees
 }
 
@@ -53,10 +52,10 @@ impl LightShow for Demo {
     type Settings = DemoSettings;
 
     fn new(settings: &DemoSettings) -> Demo {
-        let mut rng = StdRng::seed_from_u64(161051);
+        let mut rng = Rng::new(161051);
         let mut state = [0; SIZE];
         for i in 0..SIZE {
-            state[i] = rng.gen_range(0, 360);
+            state[i] = rng.next_in_range(0, 360) as isize;
         }
         Demo {
             settings: *settings,
@@ -72,7 +71,7 @@ impl LightShow for Demo {
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state (random walk on hue circles)
         for i in 0..SIZE {
-            self.state[i] += self.rng.gen_range(-VARIATION, VARIATION);
+            self.state[i] += self.rng.next_in_range(-VARIATION, VARIATION + 1) as isize;
         }
         // Show the lights (cycle if needed)
         for i in 0..lights.len() {

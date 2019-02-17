@@ -7,6 +7,7 @@ mod color_constants;
 mod demo_light_show;
 mod dotstar_strip;
 mod lights;
+mod rng;
 
 pub use self::color::*;
 pub use self::demo_light_show::{Demo, DemoSettings};
