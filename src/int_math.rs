@@ -25,6 +25,17 @@ pub fn inc(x: &mut i8, delta: i8, min: i8, max: i8) {
     }
 }
 
+pub fn inc_i32(x: &mut i32, delta: i32, min: i32, max: i32) {
+    let new_x = x.saturating_add(delta);
+    if new_x < min {
+        *x = min;
+    } else if new_x > max {
+        *x = max;
+    } else {
+        *x = new_x;
+    }
+}
+
 pub fn sqrt(x: i32) -> i8 {
     match SQUARES.binary_search(&x) {
         Ok(i) => i as i8,

@@ -1,6 +1,4 @@
-use dotstar::{
-    CircleShow, ColorRgb, Duration, FlashyShow, LightShow, LightStrip,
-};
+use dotstar::{ColorRgb, DemoLightShows, Duration, KnobEvent, LightStrip};
 
 use core::time;
 
@@ -14,21 +12,18 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
+use KnobEvent::{Button, Left, Right};
+
 fn main() {
-    let mut circle_show = CircleShow::new();
-    let mut flashy_show = FlashyShow::new();
+    let mut shows = DemoLightShows::new();
     let mut renderer = TerminalRenderer::new();
-    let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 20];
+    let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 50];
     let mut forever = false;
     'outer: loop {
         if forever {
             thread::sleep(time::Duration::from_millis(10));
         } else {
-            let duration = if renderer.mode {
-                circle_show.next(&mut lights)
-            } else {
-                flashy_show.next(&mut lights)
-            };
+            let duration = shows.next_lights(&mut lights);
             match renderer.show(&lights) {
                 Ok(()) => (),
                 Err(msg) => panic!("Failed to render light show! {}", msg),
@@ -44,27 +39,16 @@ fn main() {
         }
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
-                Key::Char('m') => renderer.mode = !renderer.mode,
-                Key::Char('r') => circle_show.change_red(5),
-                Key::Char('g') => circle_show.change_red(-5),
-                Key::Char('y') => circle_show.change_yellow(5),
-                Key::Char('b') => circle_show.change_yellow(-5),
-                Key::Up => {
-                    if renderer.mode {
-                        circle_show.change_brightness(10);
-                    } else {
-                        flashy_show.change_brightness(10);
-                    }
-                }
-                Key::Down => {
-                    if renderer.mode {
-                        circle_show.change_brightness(-10)
-                    } else {
-                        flashy_show.change_brightness(-10);
-                    }
-                }
-                Key::Right => circle_show.change_color_variation(10),
-                Key::Left => circle_show.change_color_variation(-10),
+                Key::Char('m') => shows.next_mode(),
+                Key::Char('1') => shows.knob_event(&mut lights, 0, Button),
+                Key::Char('2') => shows.knob_event(&mut lights, 1, Button),
+                Key::Char('3') => shows.knob_event(&mut lights, 2, Button),
+                Key::Down => shows.knob_event(&mut lights, 0, Left),
+                Key::Up => shows.knob_event(&mut lights, 0, Right),
+                Key::Left => shows.knob_event(&mut lights, 1, Left),
+                Key::Right => shows.knob_event(&mut lights, 1, Right),
+                Key::Char('[') => shows.knob_event(&mut lights, 2, Left),
+                Key::Char(']') => shows.knob_event(&mut lights, 2, Right),
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,
             }
@@ -75,7 +59,6 @@ fn main() {
 pub struct TerminalRenderer {
     pub stdin: input::Keys<termion::AsyncReader>,
     stdout: screen::AlternateScreen<raw::RawTerminal<io::Stdout>>,
-    mode: bool,
 }
 
 impl LightStrip for TerminalRenderer {
@@ -83,7 +66,7 @@ impl LightStrip for TerminalRenderer {
 
     fn show(&mut self, lights: &[ColorRgb]) -> io::Result<()> {
         write_lights(&mut self.stdout, &lights)?;
-        write_instructions(&mut self.stdout, self.mode)?;
+        write_instructions(&mut self.stdout)?;
         self.stdout.flush()
     }
 }
@@ -98,7 +81,6 @@ impl TerminalRenderer {
         TerminalRenderer {
             stdin: stdin,
             stdout: stdout,
-            mode: true,
         }
     }
 }
@@ -133,16 +115,10 @@ where
     Ok(())
 }
 
-fn write_instructions<W>(f: &mut W, mode: bool) -> io::Result<()>
+fn write_instructions<W>(f: &mut W) -> io::Result<()>
 where
     W: Write,
 {
-    write!(f, "{}", color::Fg(color::Rgb(255, 255, 150)))?;
-    let mode_name = if mode { "circle show" } else { "flashy show" };
-    write!(f, "{}", cursor::Goto(5, 5))?;
-    write!(f, "Current mode: {}", mode_name)?;
-    write!(f, "{}", cursor::Goto(5, 6))?;
-    write!(f, "------------------------")?;
     for (i, (r, g, b, msg)) in LINES.iter().enumerate() {
         let line_num = (i + 8) as u16;
         write!(f, "{}", cursor::Goto(5, line_num))?;
@@ -153,18 +129,18 @@ where
 }
 
 static LINES: [(u8, u8, u8, &'static str); 14] = [
-    (255, 255, 255, "m: switch mode (circle vs. flashy)"),
+    (255, 255, 255, "m: switch mode"),
     (255, 255, 255, "q,Esc: quit"),
     (0, 0, 0, ""),
-    (255, 255, 150, "Settings for circle mode"),
-    (255, 255, 150, "------------------------"),
+    (255, 255, 255, "↑: knob 1 left"),
+    (255, 255, 255, "↓: knob 1 right"),
+    (255, 255, 255, "1: knob 1 button"),
     (0, 0, 0, ""),
-    (255, 255, 255, "→: increase color variation"),
-    (255, 255, 255, "←: decrease color variation"),
-    (255, 255, 255, "↑: increase brightness"),
-    (255, 255, 255, "↓: decrease brightness"),
-    (255, 255, 255, "r: more red"),
-    (255, 255, 255, "g: more green"),
-    (255, 255, 255, "b: more blue"),
-    (255, 255, 255, "y: more yellow"),
+    (255, 255, 255, "←: knob 2 right"),
+    (255, 255, 255, "→: knob 2 left"),
+    (255, 255, 255, "2: knob 2 button"),
+    (0, 0, 0, ""),
+    (255, 255, 255, "[: knob 3 left"),
+    (255, 255, 255, "]: knob 3 right"),
+    (255, 255, 255, "3: knob 3 button"),
 ];
