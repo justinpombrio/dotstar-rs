@@ -2,6 +2,8 @@ use crate::color::*;
 use crate::int_math::{cos, inc, sin};
 use crate::lights::*;
 
+const DELAY: u32 = 400;
+
 /// A demo lightshow with lights of randomly varying hue, and controllable
 /// brightness.
 pub struct FlashyShow {
@@ -37,7 +39,7 @@ impl LightShow for FlashyShow {
         // Show the lights
         self.update(lights);
         // Wait
-        Duration::Millis(400)
+        Duration::Millis(DELAY)
     }
 
     fn update(&mut self, lights: &mut [ColorRgb]) {

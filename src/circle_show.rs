@@ -2,25 +2,28 @@ use crate::color::*;
 use crate::int_math::{cos, inc, sin};
 use crate::lights::*;
 use crate::rng::Rng;
+use core::cmp;
 
 // Number of lights to store in state. In there are more lights in the actual
 // strip, cycle these.
 const SIZE: usize = 64;
 
 // How long to wait between light updates, in ms.
-const DURATION: u32 = 10;
+const DURATION: u32 = 50;
+
+// How much the hue of the lights changes over time, as
+// a max number of degrees per DURATION. (The hues take a random walk.)
+const HUE_CHANGE_RATE: i8 = 3;
 
 /// Settings for this demo light show.
 ///
 /// - **Center_color:** The average color of the lights.
-/// - **Hue_change_rate:** How much the hue of the lights changes over time, as
-///   a max number of degrees per 100ms. (The hues take a random walk.)
+/// - **Hue_change_rate:**
 /// - **Color_variation:** How much the color varies between the lights, as a
 ///   percent of how high it could be at max.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Settings {
     pub center_color: ColorLab,
-    pub hue_change_rate: i8,
     pub color_variation: i8,
 }
 
@@ -30,7 +33,7 @@ pub struct CircleShow {
     max_radius: isize,
     settings: Settings,
     rng: Rng,
-    state: [isize; SIZE], // hue angle in degrees
+    state: [(isize, isize); SIZE], // hue angle and velocity in degrees
 }
 
 impl CircleShow {
@@ -61,15 +64,16 @@ impl CircleShow {
 impl LightShow for CircleShow {
     fn new() -> CircleShow {
         let mut rng = Rng::new(161051);
-        let mut state = [0; SIZE];
+        let mut state = [(0, 0); SIZE];
+        let var = HUE_CHANGE_RATE as i32;
         for i in 0..SIZE {
-            state[i] = rng.next_in_range(0, 360) as isize;
+            state[i].0 = rng.next_in_range(0, 360) as isize;
+            state[i].1 = rng.next_in_range(-var, var + 1) as isize;
         }
         let mut show = CircleShow {
             max_radius: 0,
             settings: Settings {
-                center_color: ColorLab { l: 50, a: 0, b: 0 },
-                hue_change_rate: 2,
+                center_color: ColorLab { l: 30, a: 0, b: 0 },
                 color_variation: 100,
             },
             rng: rng,
@@ -80,10 +84,13 @@ impl LightShow for CircleShow {
     }
 
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
-        // Update state (random walk on hue circles)
+        // Update state (random velocity walk on hue circles)
         for i in 0..SIZE {
-            let var = self.settings.hue_change_rate as i32;
-            self.state[i] += self.rng.next_in_range(-var, var + 1) as isize;
+            let var = HUE_CHANGE_RATE as isize;
+            let delta_velocity = self.rng.next_in_range(-1, 2) as isize;
+            let new_velocity = self.state[i].1 + delta_velocity;
+            self.state[i].1 = cmp::min(cmp::max(new_velocity, -var), var + 1);
+            self.state[i].0 += self.state[i].1;
         }
         // Show the lights (cycle as needed)
         self.update(lights);
@@ -96,7 +103,7 @@ impl LightShow for CircleShow {
         let colorfulness = self.settings.color_variation;
         let radius = colorfulness as isize * self.max_radius / 100;
         for i in 0..lights.len() {
-            let deg = self.state[i % SIZE];
+            let deg = self.state[i % SIZE].0;
             let a = (sin(deg, radius) as i8).wrapping_add(center.a);
             let b = (cos(deg, radius) as i8).wrapping_add(center.b);
             let color = ColorLab { l: center.l, a, b }.to_srgb_clamped();
