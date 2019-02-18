@@ -34,8 +34,15 @@ impl LightShow for FlashyShow {
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state
         self.state += 1;
-        let mut deg = (self.state * 137) % 360;
         // Show the lights
+        self.update(lights);
+        // Wait
+        Duration::Millis(400)
+    }
+
+    fn update(&mut self, lights: &mut [ColorRgb]) {
+        // Show the lights
+        let mut deg = (self.state * 137) % 360;
         for i in 0..lights.len() {
             deg = (deg + 137) % 360;
             lights[i] = ColorLab {
@@ -45,7 +52,5 @@ impl LightShow for FlashyShow {
             }
             .to_srgb_clamped();
         }
-        // Wait
-        Duration::Millis(400)
     }
 }

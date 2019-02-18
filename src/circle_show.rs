@@ -86,17 +86,21 @@ impl LightShow for CircleShow {
             self.state[i] += self.rng.next_in_range(-var, var + 1) as isize;
         }
         // Show the lights (cycle as needed)
+        self.update(lights);
+        // Wait
+        Duration::Millis(DURATION)
+    }
+
+    fn update(&mut self, lights: &mut [ColorRgb]) {
+        let center = self.settings.center_color;
+        let colorfulness = self.settings.color_variation;
+        let radius = colorfulness as isize * self.max_radius / 100;
         for i in 0..lights.len() {
             let deg = self.state[i % SIZE];
-            let center = self.settings.center_color;
-            let colorfulness = self.settings.color_variation;
-            let radius = colorfulness as isize * self.max_radius / 100;
             let a = (sin(deg, radius) as i8).wrapping_add(center.a);
             let b = (cos(deg, radius) as i8).wrapping_add(center.b);
             let color = ColorLab { l: center.l, a, b }.to_srgb_clamped();
             lights[i] = color;
         }
-        // Wait
-        Duration::Millis(DURATION)
     }
 }

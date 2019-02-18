@@ -52,15 +52,15 @@ impl ColorLab {
             colors[0].a += radius;
             colors[1].a -= radius;
             colors[2].b += radius;
-            colors[2].b -= radius;
-            colors[3].a += hr;
-            colors[3].b += hr;
+            colors[3].b -= radius;
             colors[4].a += hr;
-            colors[4].b -= hr;
-            colors[5].a -= hr;
-            colors[5].b += hr;
+            colors[4].b += hr;
+            colors[5].a += hr;
+            colors[5].b -= hr;
             colors[6].a -= hr;
-            colors[6].b -= hr;
+            colors[6].b += hr;
+            colors[7].a -= hr;
+            colors[7].b -= hr;
             for color in &colors {
                 if !color.is_valid() {
                     return radius;

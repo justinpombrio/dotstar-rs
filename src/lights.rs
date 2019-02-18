@@ -8,6 +8,7 @@ pub enum Duration {
 pub trait LightShow {
     fn new() -> Self;
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration;
+    fn update(&mut self, lights: &mut [ColorRgb]);
 }
 
 pub trait LightStrip {
