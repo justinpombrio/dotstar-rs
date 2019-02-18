@@ -40,35 +40,9 @@ impl ColorLab {
         lab_to_srgb(*self).is_ok()
     }
 
-    /// Find the radius of the largest valid A,B circle centered on this color.
+    /// Compute the radius of the largest valid A,B circle centered at this color.
     pub fn max_radius(&self) -> i8 {
-        if self.a > 40 || self.a < -40 || self.b > 40 || self.b < -40 {
-            return 0;
-        }
-        for radius in 0..100 {
-            // Test only eight points on the circle, because speed is important.
-            let hr = ((radius as i32) * 7071 / 10000) as i8; // sqrt(2) * radius
-            let mut colors = [*self; 8];
-            colors[0].a += radius;
-            colors[1].a -= radius;
-            colors[2].b += radius;
-            colors[3].b -= radius;
-            colors[4].a += hr;
-            colors[4].b += hr;
-            colors[5].a += hr;
-            colors[5].b -= hr;
-            colors[6].a -= hr;
-            colors[6].b += hr;
-            colors[7].a -= hr;
-            colors[7].b -= hr;
-            for color in &colors {
-                if !color.is_valid() {
-                    return radius;
-                }
-            }
-        }
-        // Something's gone wrong; return 0 to be safe.
-        return 0;
+        max_lab_radius(*self)
     }
 }
 
@@ -184,6 +158,35 @@ fn lab_to_srgb(lab: ColorLab) -> Result<ColorRgb, ColorRgb> {
     linear_rgb_to_srgb(xyz_to_linear_rgb(lab_to_xyz(lab)))
 }
 
+fn max_lab_radius(lab: ColorLab) -> i8 {
+    fn lookup(li: i8, ai: i8, bi: i8) -> i8 {
+        if li < 1 || li > 12 || ai < -11 || ai > 10 || bi < -11 || bi > 10 {
+            0
+        } else {
+            MAX_LAB_RADIUS[(li - 1) as usize][(ai + 11) as usize]
+                [(bi + 11) as usize]
+        }
+    }
+    fn component(li: i8, ai: i8, bi: i8, lf: i8, af: i8, bf: i8) -> i32 {
+        (lookup(li, ai, bi) as i32) * (lf as i32) * (af as i32) * (bf as i32)
+    }
+    let li = lab.l >> 3;
+    let ai = lab.a >> 3;
+    let bi = lab.b >> 3;
+    let lf = lab.l - (li << 3);
+    let af = lab.a - (ai << 3);
+    let bf = lab.b - (bi << 3);
+    ((component(li, ai, bi, 8 - lf, 8 - af, 8 - bf)
+        + component(li, ai, bi + 1, 8 - lf, 8 - af, bf)
+        + component(li, ai + 1, bi, 8 - lf, af, 8 - bf)
+        + component(li, ai + 1, bi + 1, 8 - lf, af, bf)
+        + component(li + 1, ai, bi, lf, 8 - af, 8 - bf)
+        + component(li + 1, ai, bi + 1, lf, 8 - af, bf)
+        + component(li + 1, ai + 1, bi, lf, af, 8 - bf)
+        + component(li + 1, ai + 1, bi + 1, lf, af, bf))
+        >> 9) as i8
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,6 +199,10 @@ mod tests {
     fn clamp(l: i8, a: i8, b: i8) -> (u8, u8, u8) {
         let ColorRgb { r, g, b } = ColorLab { l, a, b }.to_srgb().unwrap_err();
         (r, g, b)
+    }
+
+    fn radius(l: i8, a: i8, b: i8) -> i8 {
+        ColorLab { l, a, b }.max_radius()
     }
 
     // Tested against http://colorizer.org/
@@ -242,5 +249,17 @@ mod tests {
         clamp(127, -128, 127);
         clamp(127, 127, -128);
         clamp(127, 127, 127);
+    }
+
+    #[test]
+    fn test_lab_radius() {
+        assert_eq!(radius(0, 0, 0), 0);
+        assert_eq!(radius(20, 0, 0), 17);
+        assert_eq!(radius(50, 0, 0), 30);
+        assert_eq!(radius(70, 0, 0), 39);
+        assert_eq!(radius(90, 0, 0), 14);
+        assert_eq!(radius(100, 0, 0), 3);
+        assert_eq!(radius(70, 15, 15), 30);
+        assert_eq!(radius(70, -30, 0), 13);
     }
 }

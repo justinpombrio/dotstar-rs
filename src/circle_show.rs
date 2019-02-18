@@ -35,12 +35,12 @@ pub struct CircleShow {
 
 impl CircleShow {
     pub fn change_red(&mut self, delta: i8) {
-        inc(&mut self.settings.center_color.a, delta, -40, 40);
+        inc(&mut self.settings.center_color.a, delta, -60, 60);
         self.calculate_radius();
     }
 
     pub fn change_yellow(&mut self, delta: i8) {
-        inc(&mut self.settings.center_color.b, delta, -40, 40);
+        inc(&mut self.settings.center_color.b, delta, -60, 60);
         self.calculate_radius();
     }
 
@@ -68,7 +68,7 @@ impl LightShow for CircleShow {
         let mut show = CircleShow {
             max_radius: 0,
             settings: Settings {
-                center_color: ColorLab { l: 70, a: 0, b: 0 },
+                center_color: ColorLab { l: 50, a: 0, b: 0 },
                 hue_change_rate: 2,
                 color_variation: 100,
             },

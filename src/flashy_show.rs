@@ -26,7 +26,7 @@ impl LightShow for FlashyShow {
     fn new() -> FlashyShow {
         FlashyShow {
             state: 0,
-            brightness: 70,
+            brightness: 50,
             radius: 40,
         }
     }
