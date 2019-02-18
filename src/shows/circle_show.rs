@@ -14,15 +14,15 @@ const DURATION: u32 = 50;
 // How much the _hue change velocity_ of each light changes over time, as a max
 // number of degrees per DURATION per DURATION. (The hues' velocities take a
 // random walk.)
-const HUE_CHANGE_RATE: i8 = 3;
+const HUE_CHANGE_RATE: i32 = 3;
 
 /// A demo lightshow with lights of randomly varying hue, that all average to a
 /// controllable center color.
 pub struct CircleShow {
-    center: ColorLab,              // the average color
-    radius: isize,                 // cached max lab radius
-    rng: Rng,                      // a randomish number generator
-    state: [(isize, isize); SIZE], // (hue angle in degrees/step, velocity in degrees)
+    center: ColorLab,          // the average color
+    radius: i32,               // cached max lab radius
+    rng: Rng,                  // a randomish number generator
+    state: [(i32, i32); SIZE], // (hue angle in degrees/step, velocity in degrees)
 }
 
 impl CircleShow {
@@ -57,22 +57,18 @@ impl CircleShow {
     }
 
     fn calculate_radius(&mut self) {
-        self.radius = self.center.max_radius() as isize;
+        self.radius = self.center.max_radius() as i32;
     }
 }
 
 impl LightShow for CircleShow {
-    fn name() -> &'static str {
-        "Circle"
-    }
-
     fn new() -> CircleShow {
         let mut rng = Rng::new(161051);
         let mut state = [(0, 0); SIZE];
-        let var = HUE_CHANGE_RATE as i32;
+        let var = HUE_CHANGE_RATE;
         for i in 0..SIZE {
-            state[i].0 = rng.next_in_range(0, 360) as isize;
-            state[i].1 = rng.next_in_range(-var, var + 1) as isize;
+            state[i].0 = rng.next_in_range(0, 360);
+            state[i].1 = rng.next_in_range(-var, var + 1);
         }
         let mut show = CircleShow {
             radius: 0,
@@ -87,11 +83,10 @@ impl LightShow for CircleShow {
     fn next(&mut self, lights: &mut [ColorRgb]) -> Duration {
         // Update state (random velocity walk on hue circles)
         for i in 0..SIZE {
-            let var = HUE_CHANGE_RATE as isize;
-            let delta_velocity = (self.rng.next_in_range(-1, 2)
+            let var = HUE_CHANGE_RATE;
+            let delta_velocity = self.rng.next_in_range(-1, 2)
                 * self.rng.next_in_range(-1, 2)
-                * self.rng.next_in_range(-1, 2))
-                as isize;
+                * self.rng.next_in_range(-1, 2);
             let new_velocity = self.state[i].1 + delta_velocity;
             self.state[i].1 = cmp::min(cmp::max(new_velocity, -var), var + 1);
             self.state[i].0 += self.state[i].1;

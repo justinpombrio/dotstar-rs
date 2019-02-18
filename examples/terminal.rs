@@ -18,28 +18,28 @@ fn main() {
     let mut shows = DemoLightShows::new();
     let mut renderer = TerminalRenderer::new();
     let mut lights = [ColorRgb { r: 0, g: 0, b: 0 }; 50];
-    let mut forever = false;
+    let mut duration = Duration::Millis(0);
     'outer: loop {
-        if forever {
-            thread::sleep(time::Duration::from_millis(10));
-        } else {
-            let duration = shows.next_lights(&mut lights);
-            match renderer.show(&lights) {
-                Ok(()) => (),
-                Err(msg) => panic!("Failed to render light show! {}", msg),
+        match duration {
+            Duration::Millis(ms) => {
+                thread::sleep(time::Duration::from_millis(ms as u64));
+                duration = shows.next_lights(&mut lights);
+                match renderer.show(&lights) {
+                    Ok(()) => (),
+                    Err(msg) => panic!("Failed to render light show! {}", msg),
+                }
             }
-            match duration {
-                Duration::Millis(ms) => {
-                    thread::sleep(time::Duration::from_millis(ms as u64))
-                }
-                Duration::Forever => {
-                    forever = true;
-                }
+            Duration::Forever => {
+                thread::sleep(time::Duration::from_millis(10));
             }
         }
+        let mut updated = false;
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
-                Key::Char('m') => shows.next_mode(),
+                Key::Char('m') => {
+                    shows.next_mode();
+                    duration = Duration::Millis(0);
+                }
                 Key::Char('1') => shows.knob_event(&mut lights, 0, Button),
                 Key::Char('2') => shows.knob_event(&mut lights, 1, Button),
                 Key::Char('3') => shows.knob_event(&mut lights, 2, Button),
@@ -51,6 +51,13 @@ fn main() {
                 Key::Char(']') => shows.knob_event(&mut lights, 2, Right),
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,
+            }
+            updated = true;
+        }
+        if updated {
+            match renderer.show(&lights) {
+                Ok(()) => (),
+                Err(msg) => panic!("Failed to render light show! {}", msg),
             }
         }
     }

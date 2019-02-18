@@ -1,4 +1,4 @@
-pub fn sin(deg: isize, multiplier: isize) -> isize {
+pub fn sin(deg: i32, multiplier: i32) -> i32 {
     if deg < 0 {
         return -sin(-deg, multiplier);
     }
@@ -10,7 +10,7 @@ pub fn sin(deg: isize, multiplier: isize) -> isize {
     multiplier * 4 * deg * (180 - deg) / (40500 - deg * (180 - deg))
 }
 
-pub fn cos(deg: isize, multiplier: isize) -> isize {
+pub fn cos(deg: i32, multiplier: i32) -> i32 {
     sin(90 - deg, multiplier)
 }
 

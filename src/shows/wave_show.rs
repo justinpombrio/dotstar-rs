@@ -10,7 +10,7 @@ pub struct WaveShow {
     center: ColorLab, // average color
     delay: i32,       // delay between updates
     curvature: i32,   // number of hue degrees between adjacent lights
-    state: isize,     // counts how many updates there have been
+    state: i32,       // counts how many updates there have been
     radius: i8,       // cached max lab radius
 }
 
@@ -23,14 +23,14 @@ impl WaveShow {
     }
 
     pub fn preset_fast(&mut self) {
-        self.center = ColorLab { l: 70, a: 0, b: 10 };
+        self.center = ColorLab { l: 70, a: -9, b: 0 };
         self.radius = self.center.max_radius();
         self.delay = 50;
         self.curvature = 17;
     }
 
     pub fn preset_golden(&mut self) {
-        self.center = ColorLab { l: 70, a: 0, b: 10 };
+        self.center = ColorLab { l: 70, a: 0, b: 20 };
         self.radius = self.center.max_radius();
         self.delay = 400;
         self.curvature = 137;
@@ -51,10 +51,6 @@ impl WaveShow {
 }
 
 impl LightShow for WaveShow {
-    fn name() -> &'static str {
-        "Wave"
-    }
-
     fn new() -> WaveShow {
         let mut show = WaveShow {
             center: ColorLab { l: 70, a: 0, b: 0 },
@@ -78,11 +74,11 @@ impl LightShow for WaveShow {
 
     fn update(&mut self, lights: &mut [ColorRgb]) {
         // Show the lights
-        let mut deg = (self.state * self.curvature as isize) % 360;
+        let mut deg = (self.state * self.curvature) % 360;
         for i in 0..lights.len() {
-            deg = (deg + self.curvature as isize) % 360;
-            let a = sin(deg, self.radius as isize);
-            let b = cos(deg, self.radius as isize);
+            deg = (deg + self.curvature) % 360;
+            let a = sin(deg, self.radius as i32);
+            let b = cos(deg, self.radius as i32);
             lights[i] = ColorLab {
                 l: self.center.l,
                 a: self.center.a + a as i8,
