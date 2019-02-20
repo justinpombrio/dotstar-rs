@@ -48,7 +48,12 @@ impl DemoLightShows {
         }
         false
     }
-    pub fn press(&mut self, lights: &mut [ColorRgb], which_button: usize) {
+
+    pub fn button_pressed(
+        &mut self,
+        lights: &mut [ColorRgb],
+        which_button: usize,
+    ) {
         match self.mode {
             Mode::Off => return,
             Mode::Solid => {
@@ -123,7 +128,7 @@ impl DemoLightShows {
                 match which_knob {
                     0 => show.change_brightness(10 * clicks),
                     1 => show.change_delay(50 * clicks as i32),
-                    2 => show.change_curvature(1 * clicks as i32),
+                    2 => show.change_curvature(clicks as i32),
                     _ => panic!("Invalid knob"),
                 }
             }
@@ -179,5 +184,11 @@ impl From<u8> for Mode {
             4 => Mode::Strobe,
             _ => Mode::Off,
         }
+    }
+}
+
+impl Default for DemoLightShows {
+    fn default() -> DemoLightShows {
+        DemoLightShows::new()
     }
 }

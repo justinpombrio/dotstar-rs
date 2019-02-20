@@ -57,8 +57,8 @@ impl LightShow for SolidShow {
     }
 
     fn update(&mut self, lights: &mut [ColorRgb]) {
-        for i in 0..lights.len() {
-            lights[i] = self.color.to_srgb_clamped();
+        for light in lights {
+            *light = self.color.to_srgb_clamped();
         }
     }
 }

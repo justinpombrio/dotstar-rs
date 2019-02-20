@@ -75,11 +75,11 @@ impl LightShow for WaveShow {
     fn update(&mut self, lights: &mut [ColorRgb]) {
         // Show the lights
         let mut deg = (self.state * self.curvature) % 360;
-        for i in 0..lights.len() {
+        for light in lights {
             deg = (deg + self.curvature) % 360;
             let a = sin(deg, self.radius as i32);
             let b = cos(deg, self.radius as i32);
-            lights[i] = ColorLab {
+            *light = ColorLab {
                 l: self.center.l,
                 a: self.center.a + a as i8,
                 b: self.center.b + b as i8,

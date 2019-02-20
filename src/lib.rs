@@ -1,4 +1,6 @@
 #![no_std]
+#![deny(clippy::all)]
+#![allow(clippy::unreadable_literal, clippy::cast_lossless)]
 
 pub extern crate embedded_hal;
 

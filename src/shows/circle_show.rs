@@ -66,15 +66,15 @@ impl LightShow for CircleShow {
         let mut rng = Rng::new(161051);
         let mut state = [(0, 0); SIZE];
         let var = HUE_CHANGE_RATE;
-        for i in 0..SIZE {
-            state[i].0 = rng.next_in_range(0, 360);
-            state[i].1 = rng.next_in_range(-var, var + 1);
+        for (ref mut vel, ref mut pos) in state.iter_mut() {
+            *vel = rng.next_in_range(0, 360);
+            *pos = rng.next_in_range(-var, var + 1);
         }
         let mut show = CircleShow {
             radius: 0,
             center: ColorLab { l: 70, a: 0, b: 0 },
-            rng: rng,
-            state: state,
+            rng,
+            state,
         };
         show.calculate_radius();
         show
@@ -99,12 +99,12 @@ impl LightShow for CircleShow {
 
     fn update(&mut self, lights: &mut [ColorRgb]) {
         let center = self.center;
-        for i in 0..lights.len() {
+        for (i, light) in lights.iter_mut().enumerate() {
             let deg = self.state[i % SIZE].0;
             let a = (sin(deg, self.radius) as i8).wrapping_add(center.a);
             let b = (cos(deg, self.radius) as i8).wrapping_add(center.b);
             let color = ColorLab { l: center.l, a, b }.to_srgb_clamped();
-            lights[i] = color;
+            *light = color;
         }
     }
 }

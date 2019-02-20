@@ -18,9 +18,8 @@ pub trait LightStrip {
 
 impl Duration {
     pub fn subtract(&mut self, millis: u32) {
-        match self {
-            Duration::Millis(ref mut ms) => *ms = ms.saturating_sub(millis),
-            _ => (),
+        if let Duration::Millis(ref mut ms) = self {
+            *ms = ms.saturating_sub(millis)
         }
     }
 

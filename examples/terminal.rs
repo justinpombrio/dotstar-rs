@@ -1,4 +1,4 @@
-use dotstar::{ColorRgb, DemoLightShows, Duration, KnobEvent, LightStrip};
+use dotstar::{ColorRgb, DemoLightShows, Duration, LightStrip};
 
 use core::time;
 
@@ -12,8 +12,6 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::{clear, color, cursor, input, raw, screen, style};
 
-use KnobEvent::{Button, Left, Right};
-
 fn main() {
     let mut shows = DemoLightShows::new();
     let mut renderer = TerminalRenderer::new();
@@ -22,7 +20,7 @@ fn main() {
     'outer: loop {
         match duration {
             Duration::Millis(ms) => {
-                thread::sleep(time::Duration::from_millis(ms as u64));
+                thread::sleep(time::Duration::from_millis(ms.into()));
                 duration = shows.next_lights(&mut lights);
                 match renderer.show(&lights) {
                     Ok(()) => (),
@@ -36,19 +34,47 @@ fn main() {
         let mut updated = false;
         for key in &mut renderer.stdin {
             match key.expect("Could not read key") {
-                Key::Char('m') => {
-                    shows.next_mode();
+                Key::Char('1') => {
+                    shows.set_mode(0);
                     duration = Duration::Millis(0);
                 }
-                Key::Char('1') => shows.knob_event(&mut lights, 0, Button),
-                Key::Char('2') => shows.knob_event(&mut lights, 1, Button),
-                Key::Char('3') => shows.knob_event(&mut lights, 2, Button),
-                Key::Down => shows.knob_event(&mut lights, 0, Left),
-                Key::Up => shows.knob_event(&mut lights, 0, Right),
-                Key::Left => shows.knob_event(&mut lights, 1, Left),
-                Key::Right => shows.knob_event(&mut lights, 1, Right),
-                Key::Char('[') => shows.knob_event(&mut lights, 2, Left),
-                Key::Char(']') => shows.knob_event(&mut lights, 2, Right),
+                Key::Char('2') => {
+                    shows.set_mode(1);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('3') => {
+                    shows.set_mode(2);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('4') => {
+                    shows.set_mode(3);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('5') => {
+                    shows.set_mode(4);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('6') => {
+                    shows.set_mode(5);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('7') => {
+                    shows.set_mode(6);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('8') => {
+                    shows.set_mode(7);
+                    duration = Duration::Millis(0);
+                }
+                Key::Char('w') => shows.button_pressed(&mut lights, 0),
+                Key::Char('e') => shows.button_pressed(&mut lights, 1),
+                Key::Char('r') => shows.button_pressed(&mut lights, 2),
+                Key::Down => shows.knob_turned(&mut lights, 0, -1),
+                Key::Up => shows.knob_turned(&mut lights, 0, 1),
+                Key::Left => shows.knob_turned(&mut lights, 1, -1),
+                Key::Right => shows.knob_turned(&mut lights, 1, 1),
+                Key::Char('[') => shows.knob_turned(&mut lights, 2, -1),
+                Key::Char(']') => shows.knob_turned(&mut lights, 2, 1),
                 Key::Esc | Key::Char('q') | Key::Ctrl('c') => break 'outer,
                 _ => continue,
             }
@@ -85,10 +111,13 @@ impl TerminalRenderer {
             io::stdout().into_raw_mode().unwrap(),
         );
         write!(stdout, "{}", cursor::Hide).expect("Could not hide cursor");
-        TerminalRenderer {
-            stdin: stdin,
-            stdout: stdout,
-        }
+        TerminalRenderer { stdin, stdout }
+    }
+}
+
+impl Default for TerminalRenderer {
+    fn default() -> TerminalRenderer {
+        TerminalRenderer::new()
     }
 }
 
@@ -98,7 +127,7 @@ impl Drop for TerminalRenderer {
     }
 }
 
-fn write_light<W>(f: &mut W, light: &ColorRgb) -> io::Result<()>
+fn write_light<W>(f: &mut W, light: ColorRgb) -> io::Result<()>
 where
     W: Write,
 {
@@ -117,7 +146,7 @@ where
             write!(f, "{}", style::Reset)?;
             write!(f, "-")?;
         }
-        write_light(f, light)?;
+        write_light(f, *light)?;
     }
     Ok(())
 }
@@ -136,18 +165,18 @@ where
 }
 
 static LINES: [(u8, u8, u8, &'static str); 14] = [
-    (255, 255, 255, "m: switch mode"),
+    (255, 255, 255, "1-8: switch mode"),
     (255, 255, 255, "q,Esc: quit"),
     (0, 0, 0, ""),
     (255, 255, 255, "↑: knob 1 left"),
     (255, 255, 255, "↓: knob 1 right"),
-    (255, 255, 255, "1: knob 1 button"),
+    (255, 255, 255, "w: knob 1 button"),
     (0, 0, 0, ""),
     (255, 255, 255, "←: knob 2 right"),
     (255, 255, 255, "→: knob 2 left"),
-    (255, 255, 255, "2: knob 2 button"),
+    (255, 255, 255, "e: knob 2 button"),
     (0, 0, 0, ""),
     (255, 255, 255, "[: knob 3 left"),
     (255, 255, 255, "]: knob 3 right"),
-    (255, 255, 255, "3: knob 3 button"),
+    (255, 255, 255, "r: knob 3 button"),
 ];

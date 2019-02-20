@@ -59,21 +59,22 @@ impl LightShow for StrobeShow {
     }
 
     fn update(&mut self, lights: &mut [ColorRgb]) {
-        for i in 0..lights.len() {
-            lights[i] = if self.state {
-                let a = sin(self.hue, 40) as i8;
-                let b = cos(self.hue, 40) as i8;
-                ColorLab {
-                    l: self.brightness,
-                    a,
-                    b,
-                }
-                .to_srgb_clamped()
-            } else {
-                let a = sin(180 + self.hue, 40) as i8;
-                let b = cos(180 + self.hue, 40) as i8;
-                ColorLab { l: 70, a, b }.to_srgb_clamped()
-            };
+        let color = if self.state {
+            let a = sin(self.hue, 40) as i8;
+            let b = cos(self.hue, 40) as i8;
+            ColorLab {
+                l: self.brightness,
+                a,
+                b,
+            }
+            .to_srgb_clamped()
+        } else {
+            let a = sin(180 + self.hue, 40) as i8;
+            let b = cos(180 + self.hue, 40) as i8;
+            ColorLab { l: 70, a, b }.to_srgb_clamped()
+        };
+        for light in lights {
+            *light = color;
         }
     }
 }

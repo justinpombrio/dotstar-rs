@@ -36,13 +36,13 @@ impl ColorLab {
     }
 
     /// Check if this is a valid (i.e., representable) color.
-    pub fn is_valid(&self) -> bool {
-        lab_to_srgb(*self).is_ok()
+    pub fn is_valid(self) -> bool {
+        lab_to_srgb(self).is_ok()
     }
 
     /// Compute the radius of the largest valid A,B circle centered at this color.
-    pub fn max_radius(&self) -> i8 {
-        max_lab_radius(*self)
+    pub fn max_radius(self) -> i8 {
+        max_lab_radius(self)
     }
 }
 
@@ -54,7 +54,7 @@ impl ColorRgb {
     /// Apply gamma correction. This is needed when displaying the color on an
     /// RGB LED. Other devices like a computer monitor already have the
     /// correction built-in.
-    pub fn correct_gamma(&self) -> ColorRgb {
+    pub fn correct_gamma(self) -> ColorRgb {
         ColorRgb {
             r: GAMMA_CORRECTION[self.r as usize],
             g: GAMMA_CORRECTION[self.g as usize],
