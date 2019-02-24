@@ -68,9 +68,9 @@ impl DemoLightShows {
             Mode::Circle => {
                 let show = &mut self.circle_show;
                 match which_button {
-                    0 => show.preset_bright(),
-                    1 => show.preset_red(),
-                    2 => show.preset_yellow(),
+                    0 => show.toggle_speed(),
+                    1 => show.toggle_color(),
+                    2 => (),
                     _ => panic!("Invalid button"),
                 }
             }
